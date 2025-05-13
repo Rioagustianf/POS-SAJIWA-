@@ -10,7 +10,6 @@ import {
   CreditCard,
   Banknote,
   Receipt,
-  Loader2,
 } from "lucide-react";
 import { toast } from "react-toastify";
 import Image from "next/image";
@@ -212,7 +211,10 @@ export default function POS() {
       return;
     }
 
-    if (paymentMethod === "cash" && parseInt(cashAmount) < calculateTotal()) {
+    if (
+      paymentMethod === "cash" &&
+      Number.parseInt(cashAmount) < calculateTotal()
+    ) {
       toast.error("Cash amount is less than the total");
       return;
     }
@@ -260,9 +262,11 @@ export default function POS() {
         tax: taxAmount,
         finalTotal: finalTotal,
         paymentMethod,
-        cashAmount: parseInt(cashAmount),
+        cashAmount: Number.parseInt(cashAmount),
         change:
-          paymentMethod === "cash" ? parseInt(cashAmount) - finalTotal : 0,
+          paymentMethod === "cash"
+            ? Number.parseInt(cashAmount) - finalTotal
+            : 0,
         date: new Date(),
         cashier: user?.username || "Regina",
         restaurantName: "Master Chef Restaurant",
@@ -805,16 +809,17 @@ export default function POS() {
                       placeholder="Enter cash amount"
                     />
 
-                    {cashAmount && parseInt(cashAmount) >= calculateTotal() && (
-                      <div className="mt-2">
-                        <p className="text-sm font-medium">Change</p>
-                        <p className="text-lg font-bold">
-                          {formatCurrency(
-                            parseInt(cashAmount) - calculateTotal()
-                          )}
-                        </p>
-                      </div>
-                    )}
+                    {cashAmount &&
+                      Number.parseInt(cashAmount) >= calculateTotal() && (
+                        <div className="mt-2">
+                          <p className="text-sm font-medium">Change</p>
+                          <p className="text-lg font-bold">
+                            {formatCurrency(
+                              Number.parseInt(cashAmount) - calculateTotal()
+                            )}
+                          </p>
+                        </div>
+                      )}
                   </div>
                 )}
               </div>
@@ -831,7 +836,8 @@ export default function POS() {
                   disabled={
                     !paymentMethod ||
                     (paymentMethod === "cash" &&
-                      (!cashAmount || parseInt(cashAmount) < calculateTotal()))
+                      (!cashAmount ||
+                        Number.parseInt(cashAmount) < calculateTotal()))
                   }
                   className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -845,145 +851,121 @@ export default function POS() {
 
       {/* Receipt Modal */}
       {showReceiptModal && receiptData && (
-        <div className="h-1/2 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-md">
-            <div className="p-6" ref={receiptRef}>
-              {/* Logo */}
-              <div className="text-center mb-3">
-                <div className="h-16 w-16 bg-green-50 rounded-full flex items-center justify-center mx-auto">
-                  <ShoppingCart className="h-8 w-8 text-green-600" />
-                </div>
-              </div>
-
-              {/* Restaurant Info */}
-              <div className="text-center">
-                <h2 className="text-xl font-bold">
-                  {receiptData.restaurantName}
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="bg-card rounded-lg shadow-lg w-full max-w-md max-h-[90vh] flex flex-col">
+            <div className="p-4 overflow-y-auto" ref={receiptRef}>
+              <div className="text-center mb-4">
+                <Receipt
+                  className="h-8 w-8 mx-auto mb-2"
+                  style={{ color: "#c5172e" }}
+                />
+                <h2 className="text-xl font-bold" style={{ color: "#c5172e" }}>
+                  Receipt
                 </h2>
-                <p className="text-gray-600">{receiptData.location}</p>
-                <p className="font-bold mt-2">
-                  Dine in / Table {receiptData.tableNumber} / Pax{" "}
-                  {receiptData.pax}
+                <p
+                  className="text-muted-foreground"
+                  style={{ color: "#85193c" }}
+                >
+                  Sajiwa Steak Restaurant
                 </p>
               </div>
 
-              {/* Receipt Info */}
-              <div className="border-t border-b border-dashed border-gray-300 py-3 my-3">
+              <div
+                className="border-t border-b border-border py-3 my-3"
+                style={{ borderColor: "#c5172e" }}
+              >
                 <div className="flex justify-between text-sm">
-                  <span>Date</span>
-                  <span>
-                    {new Date(receiptData.date).toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "2-digit",
-                      year: "numeric",
-                    })}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Cashier</span>
-                  <span>{receiptData.cashier}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Trx ID</span>
+                  <span>Receipt #:</span>
                   <span>{receiptData.id}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span>Customer name</span>
-                  <span>{receiptData.customerName}</span>
+                  <span>Date:</span>
+                  <span>{receiptData.date.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span>Cashier:</span>
+                  <span>{receiptData.cashier}</span>
                 </div>
               </div>
 
-              {/* Items */}
-              <div className="border-b border-dashed border-gray-300 pb-3">
-                {receiptData.items.map((item, index) => (
-                  <div
-                    key={index}
-                    className="flex justify-between text-sm mb-1"
-                  >
-                    <div>
-                      {item.name} x{item.quantity}
-                      {item.notes && (
-                        <div className="text-xs text-gray-500">
-                          Notes: {item.notes}
-                        </div>
-                      )}
-                    </div>
+              <div className="space-y-2 mb-3">
+                {receiptData.items.map((item, idx) => (
+                  <div key={idx} className="flex justify-between text-sm">
+                    <span>
+                      {item.name} x {item.quantity}
+                    </span>
                     <span>{formatCurrency(item.subtotal)}</span>
                   </div>
                 ))}
               </div>
 
-              {/* Payment Details */}
-              <div className="mt-3">
-                <p className="font-medium mb-2">Payment Details</p>
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal</span>
+              <div
+                className="border-t border-border pt-3"
+                style={{ borderColor: "#c5172e" }}
+              >
+                <div className="flex justify-between">
+                  <span className="font-medium">Subtotal</span>
                   <span>{formatCurrency(receiptData.total)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>Discount</span>
-                  <span>{formatCurrency(receiptData.discount || 0)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Service</span>
+
+                <div className="flex justify-between">
+                  <span className="font-medium">Service (5%)</span>
                   <span>{formatCurrency(receiptData.service)}</span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>PB1</span>
+
+                <div className="flex justify-between">
+                  <span className="font-medium">Tax (10%)</span>
                   <span>{formatCurrency(receiptData.tax)}</span>
                 </div>
-                <div className="flex justify-between text-sm font-bold mt-1">
+
+                <div className="flex justify-between font-bold mt-2">
                   <span>Total</span>
                   <span>{formatCurrency(receiptData.finalTotal)}</span>
                 </div>
-              </div>
 
-              {/* Payment Method */}
-              <div className="border-t border-dashed border-gray-300 mt-3 pt-3">
-                <div className="flex justify-between text-sm">
-                  <span>Payment Method</span>
+                <div className="flex justify-between mt-3">
+                  <span className="font-medium">Payment Method</span>
                   <span>
-                    {receiptData.paymentMethod === "card"
-                      ? "QR BCA"
-                      : receiptData.paymentMethod}
+                    {receiptData.paymentMethod === "cash" ? "Cash" : "Card"}
                   </span>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span>Changes</span>
-                  <span>{formatCurrency(receiptData.change)}</span>
-                </div>
-              </div>
 
-              {/* Paid Status */}
-              <div className="border-t border-dashed border-gray-300 mt-3 pt-3 text-center">
-                <p className="font-bold">PAID</p>
-                <p className="text-sm text-gray-600 mb-3">
-                  {new Date(receiptData.date).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "2-digit",
-                    year: "numeric",
-                  })}{" "}
-                  -{" "}
-                  {new Date(receiptData.date).toLocaleTimeString("en-US", {
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hour12: false,
-                  })}
-                </p>
+                {receiptData.paymentMethod === "cash" && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Cash Amount</span>
+                      <span>{formatCurrency(receiptData.cashAmount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="font-medium">Change</span>
+                      <span>{formatCurrency(receiptData.change)}</span>
+                    </div>
+                  </>
+                )}
               </div>
-
-              <p className="text-center text-sm mt-3">
-                Thank you for your order!
-              </p>
             </div>
 
-            <div className="p-4 bg-gray-50 flex justify-center rounded-b-lg">
-              <button
-                onClick={finishTransaction}
-                className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            <div className="p-4 border-t border-border mt-auto text-center">
+              <p
+                className="text-muted-foreground text-sm mb-4"
+                style={{ color: "#85193c" }}
               >
-                Done
-              </button>
+                Thank you for dining with us!
+              </p>
+              <div className="flex justify-center gap-3">
+                <button
+                  onClick={printReceipt}
+                  className="px-4 py-2 bg-[#85193c] text-white rounded-md hover:bg-[#4a102a] transition-colors"
+                >
+                  Print
+                </button>
+                <button
+                  onClick={finishTransaction}
+                  className="px-4 py-2 bg-[#fcf259] text-[#4a102a] rounded-md hover:bg-[#c5172e] hover:text-[#fcf259] transition-colors"
+                >
+                  Done
+                </button>
+              </div>
             </div>
           </div>
         </div>

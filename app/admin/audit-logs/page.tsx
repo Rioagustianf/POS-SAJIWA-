@@ -1,6 +1,7 @@
-"use client";
+"use client"; // Memberi tahu bahwa file ini untuk frontend (client side) di Next.js
 
-import { useState, useEffect } from "react";
+// Import library dan komponen yang dibutuhkan
+import { useState, useEffect } from "react"; // Untuk state dan efek samping di React
 import {
   Search,
   Filter,
@@ -8,16 +9,21 @@ import {
   Eye,
   Calendar,
   RefreshCw,
-} from "lucide-react";
-import { toast } from "sonner";
-import AdminLayout from "@/components/layout/admin-layout";
-import { format } from "date-fns";
-import exportAuditLogToPDF from "@/lib/exportAuditLogToPDF";
+} from "lucide-react"; // Icon yang digunakan di tampilan
+import { toast } from "sonner"; // Untuk menampilkan notifikasi
+import AdminLayout from "@/components/layout/admin-layout"; // Layout admin
+import { format } from "date-fns"; // Untuk format tanggal
+import exportAuditLogToPDF from "@/lib/exportAuditLogToPDF"; // Fungsi export ke PDF
 
+// Komponen utama halaman AuditLogs
 export default function AuditLogs() {
+  // State untuk menyimpan data log audit
   const [logs, setLogs] = useState([]);
+  // State untuk status loading (sedang mengambil data atau tidak)
   const [isLoading, setIsLoading] = useState(true);
+  // State untuk kata kunci pencarian
   const [searchTerm, setSearchTerm] = useState("");
+  // State untuk filter (nama tabel, aksi, user, tanggal)
   const [filters, setFilters] = useState({
     tableName: "",
     action: "",
@@ -25,66 +31,80 @@ export default function AuditLogs() {
     startDate: "",
     endDate: "",
   });
+  // State untuk menampilkan/menyembunyikan filter
   const [showFilters, setShowFilters] = useState(false);
+  // State untuk pagination (halaman, limit, total data, total halaman)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
     total: 0,
     totalPages: 0,
   });
+  // State untuk log yang dipilih (untuk detail)
   const [selectedLog, setSelectedLog] = useState(null);
+  // State untuk menampilkan/menyembunyikan modal detail log
   const [showLogModal, setShowLogModal] = useState(false);
+  // State untuk daftar user (untuk filter)
   const [users, setUsers] = useState([]);
+  // State untuk daftar nama tabel (untuk filter)
   const [tableNames, setTableNames] = useState([]);
+  // State untuk daftar aksi (hanya CREATE, UPDATE, DELETE)
   const [actions, setActions] = useState(["CREATE", "UPDATE", "DELETE"]);
 
+  // useEffect: otomatis jalankan fetchAuditLogs dan fetchUsers saat halaman load atau filter/pagination berubah
   useEffect(() => {
     fetchAuditLogs();
     fetchUsers();
   }, [pagination.page, filters]);
 
+  // Fungsi mengambil data audit log dari API
   const fetchAuditLogs = async () => {
-    setIsLoading(true);
+    setIsLoading(true); // Tampilkan loading
     try {
-      // Build query parameters
+      // Siapkan parameter query dari pagination dan filter
       const params = new URLSearchParams({
         page: pagination.page,
         limit: pagination.limit,
       });
 
+      // Tambahkan filter jika ada isinya
       if (filters.tableName) params.append("tableName", filters.tableName);
       if (filters.action) params.append("action", filters.action);
       if (filters.userId) params.append("userId", filters.userId);
       if (filters.startDate) params.append("startDate", filters.startDate);
       if (filters.endDate) params.append("endDate", filters.endDate);
 
+      // Ambil data dari API
       const response = await fetch(`/api/audit-logs?${params.toString()}`, {
         method: "GET",
         credentials: "include",
       });
 
+      // Jika gagal, lempar error
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
 
+      // Ambil data JSON dari response
       const data = await response.json();
-      setLogs(data.logs);
-      setPagination(data.pagination);
+      setLogs(data.logs); // Simpan log ke state
+      setPagination(data.pagination); // Simpan pagination ke state
 
-      // Extract unique table names for filter
+      // Ambil nama tabel unik dari data log untuk filter
       const uniqueTableNames = [
         ...new Set(data.logs.map((log) => log.tableName)),
       ];
       setTableNames(uniqueTableNames);
 
-      setIsLoading(false);
+      setIsLoading(false); // Selesai loading
     } catch (error) {
       console.error("Error fetching audit logs:", error);
-      toast.error("Failed to load audit logs");
+      toast.error("Failed to load audit logs"); // Tampilkan notifikasi error
       setIsLoading(false);
     }
   };
 
+  // Fungsi mengambil daftar user dari API (untuk filter)
   const fetchUsers = async () => {
     try {
       const response = await fetch("/api/users", {
@@ -97,16 +117,18 @@ export default function AuditLogs() {
       }
 
       const data = await response.json();
-      setUsers(data);
+      setUsers(data); // Simpan user ke state
     } catch (error) {
       console.error("Error fetching users:", error);
     }
   };
 
+  // Fungsi ketika user mengetik di kolom pencarian
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Fungsi ketika filter diubah
   const handleFilterChange = (e) => {
     const { name, value } = e.target;
     setFilters({
@@ -115,10 +137,12 @@ export default function AuditLogs() {
     });
   };
 
+  // Fungsi untuk menerapkan filter, reset ke halaman 1
   const applyFilters = () => {
-    setPagination({ ...pagination, page: 1 }); // Reset to first page when applying filters
+    setPagination({ ...pagination, page: 1 });
   };
 
+  // Fungsi untuk mereset semua filter ke default
   const resetFilters = () => {
     setFilters({
       tableName: "",
@@ -130,17 +154,20 @@ export default function AuditLogs() {
     setPagination({ ...pagination, page: 1 });
   };
 
+  // Fungsi untuk pindah halaman pada pagination
   const handlePageChange = (newPage) => {
     if (newPage > 0 && newPage <= pagination.totalPages) {
       setPagination({ ...pagination, page: newPage });
     }
   };
 
+  // Fungsi untuk menampilkan detail log di modal
   const viewLogDetails = (log) => {
     setSelectedLog(log);
     setShowLogModal(true);
   };
 
+  // Fungsi untuk export data log yang difilter ke PDF
   const handleExportPDF = () => {
     exportAuditLogToPDF(filteredLogs, {
       ...(filters.tableName && { Table: filters.tableName }),
@@ -153,7 +180,7 @@ export default function AuditLogs() {
     });
   };
 
-  // Filter logs by search term
+  // Filter log berdasarkan kata kunci pencarian
   const filteredLogs = logs.filter((log) => {
     return (
       log.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -163,7 +190,7 @@ export default function AuditLogs() {
     );
   });
 
-  // Format JSON data for display
+  // Fungsi untuk menampilkan data JSON dengan format rapi
   const formatJSON = (jsonData) => {
     try {
       if (!jsonData) return "No data";
@@ -176,13 +203,16 @@ export default function AuditLogs() {
     }
   };
 
+  // Tampilan utama halaman
   return (
     <AdminLayout>
       <div className="space-y-6">
+        {/* Header dan search/filter/export */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <h1 className="text-3xl font-bold">Audit Logs</h1>
 
           <div className="flex flex-col sm:flex-row gap-3">
+            {/* Kolom pencarian */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
@@ -194,6 +224,7 @@ export default function AuditLogs() {
               />
             </div>
 
+            {/* Tombol filter dan export */}
             <div className="flex gap-2">
               <button
                 onClick={() => setShowFilters(!showFilters)}
@@ -213,10 +244,12 @@ export default function AuditLogs() {
           </div>
         </div>
 
+        {/* Form filter */}
         {showFilters && (
           <div className="bg-card rounded-lg shadow p-4 mb-4">
             <h2 className="text-lg font-semibold mb-3">Filters</h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              {/* Filter nama tabel */}
               <div>
                 <label
                   htmlFor="tableName"
@@ -239,7 +272,7 @@ export default function AuditLogs() {
                   ))}
                 </select>
               </div>
-
+              {/* Filter aksi */}
               <div>
                 <label
                   htmlFor="action"
@@ -262,7 +295,7 @@ export default function AuditLogs() {
                   ))}
                 </select>
               </div>
-
+              {/* Filter user */}
               <div>
                 <label
                   htmlFor="userId"
@@ -285,7 +318,7 @@ export default function AuditLogs() {
                   ))}
                 </select>
               </div>
-
+              {/* Filter tanggal mulai */}
               <div>
                 <label
                   htmlFor="startDate"
@@ -302,7 +335,7 @@ export default function AuditLogs() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 />
               </div>
-
+              {/* Filter tanggal akhir */}
               <div>
                 <label
                   htmlFor="endDate"
@@ -319,7 +352,7 @@ export default function AuditLogs() {
                   className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 />
               </div>
-
+              {/* Tombol apply dan reset filter */}
               <div className="flex items-end gap-2">
                 <button
                   onClick={applyFilters}
@@ -338,6 +371,7 @@ export default function AuditLogs() {
           </div>
         )}
 
+        {/* Tampilkan loading jika sedang mengambil data */}
         {isLoading ? (
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
@@ -348,6 +382,7 @@ export default function AuditLogs() {
             </div>
           </div>
         ) : (
+          // Tabel data log audit
           <div className="bg-card rounded-lg shadow overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full">
@@ -365,6 +400,7 @@ export default function AuditLogs() {
                 </thead>
                 <tbody>
                   {filteredLogs.length > 0 ? (
+                    // Tampilkan data log hasil filter
                     filteredLogs.map((log) => (
                       <tr
                         key={log.id}
@@ -413,6 +449,7 @@ export default function AuditLogs() {
                       </tr>
                     ))
                   ) : (
+                    // Jika tidak ada data log
                     <tr>
                       <td
                         colSpan="8"
@@ -430,6 +467,7 @@ export default function AuditLogs() {
             {pagination.totalPages > 1 && (
               <div className="flex items-center justify-between px-4 py-3 border-t border-border">
                 <div className="text-sm text-muted-foreground">
+                  {/* Info jumlah data yang ditampilkan */}
                   Showing {(pagination.page - 1) * pagination.limit + 1} to{" "}
                   {Math.min(
                     pagination.page * pagination.limit,
@@ -437,6 +475,7 @@ export default function AuditLogs() {
                   )}{" "}
                   of {pagination.total} entries
                 </div>
+                {/* Tombol navigasi halaman */}
                 <div className="flex gap-1">
                   <button
                     onClick={() => handlePageChange(1)}
@@ -474,121 +513,123 @@ export default function AuditLogs() {
             )}
           </div>
         )}
-      </div>
 
-      {/* Log Details Modal */}
-      {showLogModal && selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-card rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="p-6 overflow-y-auto max-h-[90vh]">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Audit Log Details</h2>
-                <button
-                  onClick={() => setShowLogModal(false)}
-                  className="p-1 rounded-full hover:bg-muted transition-colors"
-                >
-                  &times;
-                </button>
-              </div>
+        {/* Modal detail log */}
+        {showLogModal && selectedLog && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="bg-card rounded-lg shadow-lg w-full max-w-4xl max-h-[90vh] overflow-hidden">
+              <div className="p-6 overflow-y-auto max-h-[90vh]">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-bold">Audit Log Details</h2>
+                  <button
+                    onClick={() => setShowLogModal(false)}
+                    className="p-1 rounded-full hover:bg-muted transition-colors"
+                  >
+                    &times;
+                  </button>
+                </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    ID
-                  </p>
-                  <p className="font-medium">#{selectedLog.id}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Action
-                  </p>
-                  <p>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        selectedLog.action === "CREATE"
-                          ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                          : selectedLog.action === "UPDATE"
-                          ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
-                          : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
-                      }`}
-                    >
-                      {selectedLog.action}
-                    </span>
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Description
-                  </p>
-                  <p>{selectedLog.description}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Date
-                  </p>
-                  <p>
-                    {format(
-                      new Date(selectedLog.createdAt),
-                      "MMMM d, yyyy h:mm:ss a"
-                    )}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Table
-                  </p>
-                  <p>{selectedLog.tableName}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    Record ID
-                  </p>
-                  <p>{selectedLog.recordId}</p>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">
-                    User
-                  </p>
-                  <p>
-                    {selectedLog.user.username}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      ({selectedLog.user.role})
-                    </span>
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {selectedLog.oldData && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                    <h3 className="font-semibold mb-2">Old Data</h3>
-                    <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs">
-                      {formatJSON(selectedLog.oldData)}
-                    </pre>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      ID
+                    </p>
+                    <p className="font-medium">#{selectedLog.id}</p>
                   </div>
-                )}
-                {selectedLog.newData && (
                   <div>
-                    <h3 className="font-semibold mb-2">New Data</h3>
-                    <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs">
-                      {formatJSON(selectedLog.newData)}
-                    </pre>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Action
+                    </p>
+                    <p>
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs ${
+                          selectedLog.action === "CREATE"
+                            ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
+                            : selectedLog.action === "UPDATE"
+                            ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+                            : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-300"
+                        }`}
+                      >
+                        {selectedLog.action}
+                      </span>
+                    </p>
                   </div>
-                )}
-              </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Description
+                    </p>
+                    <p>{selectedLog.description}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Date
+                    </p>
+                    <p>
+                      {format(
+                        new Date(selectedLog.createdAt),
+                        "MMMM d, yyyy h:mm:ss a"
+                      )}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Table
+                    </p>
+                    <p>{selectedLog.tableName}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Record ID
+                    </p>
+                    <p>{selectedLog.recordId}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      User
+                    </p>
+                    <p>
+                      {selectedLog.user.username}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        ({selectedLog.user.role})
+                      </span>
+                    </p>
+                  </div>
+                </div>
 
-              <div className="flex justify-end mt-6">
-                <button
-                  onClick={() => setShowLogModal(false)}
-                  className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
-                >
-                  Close
-                </button>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {/* Tampilkan data sebelum perubahan jika ada */}
+                  {selectedLog.oldData && (
+                    <div>
+                      <h3 className="font-semibold mb-2">Old Data</h3>
+                      <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs">
+                        {formatJSON(selectedLog.oldData)}
+                      </pre>
+                    </div>
+                  )}
+                  {/* Tampilkan data setelah perubahan jika ada */}
+                  {selectedLog.newData && (
+                    <div>
+                      <h3 className="font-semibold mb-2">New Data</h3>
+                      <pre className="bg-muted p-3 rounded-md overflow-x-auto text-xs">
+                        {formatJSON(selectedLog.newData)}
+                      </pre>
+                    </div>
+                  )}
+                </div>
+
+                <div className="flex justify-end mt-6">
+                  <button
+                    onClick={() => setShowLogModal(false)}
+                    className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </AdminLayout>
   );
 }

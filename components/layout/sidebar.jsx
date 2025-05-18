@@ -55,12 +55,12 @@ export default function Sidebar({ roles = [] }) {
     },
     {
       href: "/admin/products",
-      label: "Mengelola Produk",
+      label: "Kelola Produk",
       icon: <ShoppingBag className="h-5 w-5" />,
     },
     {
       href: "/admin/users",
-      label: "Mengelola Pengguna",
+      label: "Kelola Pengguna",
       icon: <Users className="h-5 w-5" />,
     },
     {
@@ -78,12 +78,12 @@ export default function Sidebar({ roles = [] }) {
     },
     {
       href: "/admin/products",
-      label: "Mengelola Produk",
+      label: "Kelola Produk",
       icon: <ShoppingBag className="h-5 w-5" />,
     },
     {
       href: "/admin/users",
-      label: "Mengelola Pengguna",
+      label: "Kelola Pengguna",
       icon: <Users className="h-5 w-5" />,
     },
     {
@@ -93,17 +93,17 @@ export default function Sidebar({ roles = [] }) {
     },
     {
       href: "/admin/audit-logs",
-      label: "Melihat Audit Log",
+      label: "Log Aktivitas",
       icon: <AlertCircle className="h-5 w-5" />,
     },
     {
       href: "/admin/data-cleanup",
-      label: "Menghapus Data Penting",
+      label: "Hapus Data",
       icon: <Trash2 className="h-5 w-5" />,
     },
     {
       href: "/admin/print-reports",
-      label: "Mencetak Laporan",
+      label: "Cetak Laporan",
       icon: <Receipt className="h-5 w-5" />,
     },
   ];
@@ -111,12 +111,12 @@ export default function Sidebar({ roles = [] }) {
   const cashierLinks = [
     {
       href: "/pos",
-      label: "Melakukan Transaksi",
+      label: "Transaksi Baru",
       icon: <ShoppingBag className="h-5 w-5" />,
     },
     {
       href: "/pos/history",
-      label: "Melihat Riwayat Penjualan",
+      label: "Riwayat Penjualan",
       icon: <BarChart3 className="h-5 w-5" />,
     },
   ];

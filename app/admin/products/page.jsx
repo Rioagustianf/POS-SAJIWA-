@@ -45,10 +45,38 @@ export default function Products() {
   const [uploadProgress, setUploadProgress] = useState(0);
   // Membuat ref untuk input file gambar
   const fileInputRef = useRef(null);
+  // State untuk menyimpan roles user
+  const [roles, setRoles] = useState([]);
+  // State untuk loading roles user
+  const [isRolesLoading, setIsRolesLoading] = useState(true);
 
   // useEffect dijalankan sekali saat komponen pertama kali dimuat
   useEffect(() => {
     fetchProducts(); // Ambil data produk dari server
+  }, []);
+
+  // useEffect untuk fetch roles user saat komponen dimount
+  useEffect(() => {
+    // Fungsi async untuk ambil data user
+    const fetchUserRoles = async () => {
+      try {
+        // Panggil endpoint untuk ambil data user
+        const response = await fetch("/api/auth/me");
+        if (response.ok) {
+          // Ambil data user dari response
+          const data = await response.json();
+          // Set roles ke state
+          setRoles(data.user.roles || []);
+        }
+      } catch (error) {
+        // Jika error, tampilkan di konsol
+        console.error("Gagal mengambil data user:", error);
+      } finally {
+        // Set loading selesai
+        setIsRolesLoading(false);
+      }
+    };
+    fetchUserRoles(); // Panggil fungsi fetch user
   }, []);
 
   // Fungsi untuk mengambil data produk dari server
@@ -415,13 +443,32 @@ export default function Products() {
                             >
                               <Edit className="h-4 w-4" />
                             </button>
-                            <button
-                              onClick={() => handleDeleteProduct(product)}
-                              className="p-1 rounded-md hover:bg-muted transition-colors text-destructive"
-                              aria-label="Delete product"
+                            <span
+                              title={
+                                roles.includes("Manajer")
+                                  ? "Hapus produk"
+                                  : "Hanya manajer yang bisa menghapus produk"
+                              }
+                              style={{ display: "inline-block" }}
                             >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
+                              <button
+                                onClick={() =>
+                                  roles.includes("Manajer") &&
+                                  handleDeleteProduct(product)
+                                }
+                                className={`p-1 rounded-md transition-colors text-destructive ${
+                                  roles.includes("Manajer")
+                                    ? "hover:bg-muted"
+                                    : "opacity-50 cursor-not-allowed"
+                                }`}
+                                aria-label="Delete product"
+                                disabled={!roles.includes("Manajer")}
+                                tabIndex={roles.includes("Manajer") ? 0 : -1}
+                                type="button"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </span>
                           </div>
                         </td>
                       </tr>

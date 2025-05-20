@@ -393,9 +393,9 @@ export default function Users() {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
                     >
-                      <option value="CASHIER">Manajer</option>
-                      <option value="CASHIER">Cashier</option>
-                      <option value="ADMIN">Admin</option>
+                      <option value="Manajer">Manajer</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Kasir">Kasir</option>
                     </select>
                   </div>
                 </div>
@@ -478,9 +478,9 @@ export default function Users() {
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
                       disabled={currentUser?.username === "manajer"}
                     >
-                      <option value="MANAJER">Manajer</option>
-                      <option value="CASHIER">Cashier</option>
-                      <option value="ADMIN">Admin</option>
+                      <option value="Manajer">Manajer</option>
+                      <option value="Admin">Admin</option>
+                      <option value="Kasir">Kasir</option>
                     </select>
                     {currentUser?.username === "manajer" && (
                       <p className="text-xs text-muted-foreground mt-1">

@@ -31,6 +31,8 @@ export async function GET(request) {
     const endDate = url.searchParams.get("endDate"); // Tanggal akhir
     const period = url.searchParams.get("period") || "daily"; // Periode laporan (default: harian)
 
+    // Deklarasi variabel start dan end untuk rentang tanggal laporan
+    let start, end;
     // Set rentang waktu laporan
     if (startDate && endDate) {
       start = startOfDay(new Date(startDate)); // Mulai dari awal hari startDate

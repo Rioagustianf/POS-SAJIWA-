@@ -17,22 +17,32 @@ import { format } from "date-fns";
 import { exportToPDF } from "@/lib/exportToPdf";
 import { formatCurrency } from "@/lib/utils";
 
+// Komponen utama untuk halaman riwayat penjualan
 export default function SalesHistory() {
+  // State untuk menyimpan daftar transaksi penjualan
   const [transactions, setTransactions] = useState([]);
+  // State untuk status loading (apakah data sedang diambil)
   const [isLoading, setIsLoading] = useState(true);
+  // State untuk kata kunci pencarian
   const [searchTerm, setSearchTerm] = useState("");
+  // State untuk rentang tanggal filter
   const [dateRange, setDateRange] = useState({ start: "", end: "" });
+  // State untuk konfigurasi pengurutan data
   const [sortConfig, setSortConfig] = useState({
     key: "date",
     direction: "desc",
   });
+  // State untuk transaksi yang sedang diperluas detailnya
   const [expandedTransaction, setExpandedTransaction] = useState(null);
+  // State untuk filter metode pembayaran
   const [filterPaymentMethod, setFilterPaymentMethod] = useState("");
 
+  // useEffect untuk mengambil data transaksi saat pertama kali halaman dibuka
   useEffect(() => {
-    fetchTransactions();
+    fetchTransactions(); // Ambil data transaksi dari server
   }, []);
 
+  // Fungsi untuk mengambil data transaksi dari server
   const fetchTransactions = async () => {
     setIsLoading(true);
     try {
@@ -40,25 +50,25 @@ export default function SalesHistory() {
         method: "GET",
         credentials: "include",
       });
-
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
       const data = await response.json();
-      setTransactions(data);
+      setTransactions(data); // Simpan data transaksi ke state
       setIsLoading(false);
     } catch (error) {
       console.error("Error fetching transactions:", error);
-      toast.error("Failed to load transaction history");
+      toast.error("Gagal memuat riwayat transaksi");
       setIsLoading(false);
     }
   };
 
+  // Fungsi untuk menangani perubahan input pencarian
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Fungsi untuk menangani perubahan rentang tanggal
   const handleDateRangeChange = (e) => {
     const { name, value } = e.target;
     setDateRange({
@@ -67,6 +77,7 @@ export default function SalesHistory() {
     });
   };
 
+  // Fungsi untuk mengatur pengurutan data
   const handleSort = (key) => {
     let direction = "asc";
     if (sortConfig.key === key && sortConfig.direction === "asc") {
@@ -75,6 +86,7 @@ export default function SalesHistory() {
     setSortConfig({ key, direction });
   };
 
+  // Fungsi untuk menampilkan/sembunyikan detail transaksi
   const toggleTransactionDetails = (id) => {
     if (expandedTransaction === id) {
       setExpandedTransaction(null);
@@ -83,23 +95,24 @@ export default function SalesHistory() {
     }
   };
 
+  // Fungsi untuk mengekspor data ke PDF
   const handleExportPDF = () => {
     try {
-      // Call the exportToPDF function with the filtered transactions and filters
+      // Panggil fungsi exportToPDF dengan data transaksi yang sudah difilter dan filter yang digunakan
       exportToPDF(filteredTransactions, {
         startDate: dateRange.start,
         endDate: dateRange.end,
         paymentMethod: filterPaymentMethod,
       });
 
-      toast.success("PDF report generated successfully");
+      toast.success("Laporan PDF berhasil dibuat");
     } catch (error) {
       console.error("Error generating PDF:", error);
-      toast.error("Failed to generate PDF report");
+      toast.error("Gagal membuat laporan PDF");
     }
   };
 
-  // Filter transactions based on search term, date range, and payment method
+  // Filter transaksi berdasarkan kata kunci pencarian, rentang tanggal, dan metode pembayaran
   const filteredTransactions = transactions.filter((transaction) => {
     const matchesSearch =
       transaction.cashier.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -120,7 +133,7 @@ export default function SalesHistory() {
     return matchesSearch && matchesDateRange && matchesPaymentMethod;
   });
 
-  // Sort transactions
+  // Urutkan transaksi
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     if (sortConfig.key === "date") {
       return sortConfig.direction === "asc"
@@ -135,13 +148,13 @@ export default function SalesHistory() {
     if (sortConfig.key === "id") {
       return sortConfig.direction === "asc" ? a.id - b.id : b.id - a.id;
     }
-    // For string comparisons (cashier, paymentMethod)
+    // Untuk perbandingan string (cashier, paymentMethod)
     return sortConfig.direction === "asc"
       ? a[sortConfig.key].localeCompare(b[sortConfig.key])
       : b[sortConfig.key].localeCompare(a[sortConfig.key]);
   });
 
-  // Get unique payment methods for filter
+  // Ambil daftar metode pembayaran unik untuk filter
   const paymentMethods = [...new Set(transactions.map((t) => t.paymentMethod))];
 
   return (

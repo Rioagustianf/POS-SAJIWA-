@@ -16,52 +16,67 @@ import { toast } from "sonner";
 import AdminLayout from "@/components/layout/admin-layout";
 
 export default function Products() {
+  // Membuat state untuk menyimpan daftar produk
   const [products, setProducts] = useState([]);
+  // Membuat state untuk menandai apakah data sedang dimuat
   const [isLoading, setIsLoading] = useState(true);
+  // Membuat state untuk menyimpan kata kunci pencarian
   const [searchTerm, setSearchTerm] = useState("");
+  // Membuat state untuk menampilkan modal tambah produk
   const [showAddModal, setShowAddModal] = useState(false);
+  // Membuat state untuk menampilkan modal edit produk
   const [showEditModal, setShowEditModal] = useState(false);
+  // Membuat state untuk menampilkan modal hapus produk
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // Membuat state untuk menyimpan produk yang sedang dipilih (untuk edit/hapus)
   const [currentProduct, setCurrentProduct] = useState(null);
+  // Membuat state untuk menyimpan data form (tambah/edit produk)
   const [formData, setFormData] = useState({
-    name: "",
-    price: "",
-    stock: "",
-    description: "",
-    category: "",
-    image: "",
+    name: "", // Nama produk
+    price: "", // Harga produk
+    stock: "", // Stok produk
+    description: "", // Deskripsi produk
+    category: "", // Kategori produk
+    image: "", // URL gambar produk
   });
+  // Membuat state untuk menandai status upload gambar
   const [isUploading, setIsUploading] = useState(false);
+  // Membuat state untuk menyimpan progress upload gambar
   const [uploadProgress, setUploadProgress] = useState(0);
+  // Membuat ref untuk input file gambar
   const fileInputRef = useRef(null);
 
+  // useEffect dijalankan sekali saat komponen pertama kali dimuat
   useEffect(() => {
-    fetchProducts();
+    fetchProducts(); // Ambil data produk dari server
   }, []);
 
+  // Fungsi untuk mengambil data produk dari server
   const fetchProducts = async () => {
     try {
-      setIsLoading(true);
-      const response = await fetch("/api/products");
+      setIsLoading(true); // Set loading menjadi true
+      const response = await fetch("/api/products"); // Ambil data produk dari API
 
       if (!response.ok) {
-        throw new Error("Failed to fetch products");
+        throw new Error("Failed to fetch products"); // Jika gagal, lempar error
       }
 
-      const data = await response.json();
-      setProducts(data);
+      const data = await response.json(); // Ubah response ke JSON
+      setProducts(data); // Simpan data produk ke state
     } catch (error) {
-      console.error("Error fetching products:", error);
-      toast.error("Failed to load products");
+      console.error("Error fetching products:", error); // Tampilkan error di konsol
+      toast.error("Failed to load products"); // Tampilkan notifikasi error
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set loading menjadi false
     }
   };
 
+  // Fungsi untuk menangani perubahan input pencarian
   const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+    setSearchTerm(e.target.value); // Ubah kata kunci pencarian sesuai input user
   };
 
+  // Membuat daftar produk yang sudah difilter berdasarkan kata kunci pencarian
   const filteredProducts = products.filter(
     (product) =>
       product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -69,15 +84,17 @@ export default function Products() {
         product.category.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
+  // Fungsi untuk menangani perubahan input pada form tambah/edit produk
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
+    const { name, value } = e.target; // Ambil nama dan nilai input
     setFormData({
-      ...formData,
+      ...formData, // Salin data form sebelumnya
       [name]:
-        name === "price" || name === "stock" ? parseInt(value) || "" : value,
+        name === "price" || name === "stock" ? parseInt(value) || "" : value, // Jika input price/stock, ubah ke angka
     });
   };
 
+  // Fungsi untuk membuka modal tambah produk dan mereset form
   const handleAddProduct = () => {
     setFormData({
       name: "",
@@ -87,11 +104,12 @@ export default function Products() {
       category: "",
       image: "",
     });
-    setShowAddModal(true);
+    setShowAddModal(true); // Tampilkan modal tambah produk
   };
 
+  // Fungsi untuk membuka modal edit produk dan mengisi form dengan data produk yang dipilih
   const handleEditProduct = (product) => {
-    setCurrentProduct(product);
+    setCurrentProduct(product); // Set produk yang sedang diedit
     setFormData({
       name: product.name,
       price: product.price,
@@ -100,40 +118,42 @@ export default function Products() {
       category: product.category || "",
       image: product.image || "",
     });
-    setShowEditModal(true);
+    setShowEditModal(true); // Tampilkan modal edit produk
   };
 
+  // Fungsi untuk membuka modal hapus produk dan menyimpan produk yang akan dihapus
   const handleDeleteProduct = (product) => {
-    setCurrentProduct(product);
-    setShowDeleteModal(true);
+    setCurrentProduct(product); // Set produk yang akan dihapus
+    setShowDeleteModal(true); // Tampilkan modal hapus produk
   };
 
+  // Fungsi untuk menangani perubahan file gambar
   const handleFileChange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]; // Ambil file yang dipilih user
+    if (!file) return; // Jika tidak ada file, keluar
 
-    // Validate file type
+    // Validasi tipe file
     const validTypes = ["image/jpeg", "image/png", "image/gif", "image/jpg"];
     if (!validTypes.includes(file.type)) {
       toast.error("Invalid file type. Only JPEG, PNG, and GIF are allowed.");
       return;
     }
 
-    // Validate file size (5MB max)
+    // Validasi ukuran file (maksimal 5MB)
     if (file.size > 5 * 1024 * 1024) {
       toast.error("File too large. Maximum size is 5MB.");
       return;
     }
 
     try {
-      setIsUploading(true);
-      setUploadProgress(0);
+      setIsUploading(true); // Set status upload menjadi true
+      setUploadProgress(0); // Set progress upload ke 0
 
-      // Create form data
+      // Membuat FormData untuk upload file
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("file", file); // Tambahkan file ke FormData
 
-      // Simulate upload progress
+      // Simulasi progress upload
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           const newProgress = prev + Math.floor(Math.random() * 10);
@@ -141,41 +161,42 @@ export default function Products() {
         });
       }, 200);
 
-      // Upload file
+      // Upload file ke server
       const response = await fetch("/api/upload", {
         method: "POST",
         body: formData,
         credentials: "include",
       });
 
-      clearInterval(progressInterval);
+      clearInterval(progressInterval); // Hentikan simulasi progress
 
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to upload image");
       }
 
-      const data = await response.json();
-      setUploadProgress(100);
+      const data = await response.json(); // Ambil data hasil upload
+      setUploadProgress(100); // Set progress upload ke 100
 
-      // Update form data with image URL
+      // Update form data dengan URL gambar
       setFormData((prev) => ({
         ...prev,
         image: data.url,
       }));
 
-      toast.success("Image uploaded successfully");
+      toast.success("Image uploaded successfully"); // Tampilkan notifikasi sukses
     } catch (error) {
-      console.error("Error uploading image:", error);
-      toast.error(error.message || "Failed to upload image");
+      console.error("Error uploading image:", error); // Tampilkan error di konsol
+      toast.error(error.message || "Failed to upload image"); // Notifikasi error
     } finally {
       setTimeout(() => {
-        setIsUploading(false);
-        setUploadProgress(0);
+        setIsUploading(false); // Set status upload menjadi false
+        setUploadProgress(0); // Reset progress upload
       }, 500);
     }
   };
 
+  // Fungsi untuk menghapus gambar dari form
   const removeImage = () => {
     setFormData((prev) => ({
       ...prev,
@@ -187,10 +208,11 @@ export default function Products() {
     }
   };
 
+  // Fungsi untuk submit form tambah produk
   const submitAddProduct = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Mencegah reload halaman
 
-    // Validate form
+    // Validasi form, nama dan harga wajib diisi
     if (!formData.name || !formData.price) {
       toast.error("Name and price are required");
       return;
@@ -210,20 +232,21 @@ export default function Products() {
         throw new Error(error.message || "Failed to add product");
       }
 
-      const newProduct = await response.json();
-      setProducts([...products, newProduct]);
-      setShowAddModal(false);
-      toast.success("Product added successfully");
+      const newProduct = await response.json(); // Ambil data produk baru
+      setProducts([...products, newProduct]); // Tambahkan produk baru ke daftar
+      setShowAddModal(false); // Tutup modal tambah produk
+      toast.success("Product added successfully"); // Notifikasi sukses
     } catch (error) {
-      console.error("Error adding product:", error);
-      toast.error(error.message || "Failed to add product");
+      console.error("Error adding product:", error); // Tampilkan error di konsol
+      toast.error(error.message || "Failed to add product"); // Notifikasi error
     }
   };
 
+  // Fungsi untuk submit form edit produk
   const submitEditProduct = async (e) => {
-    e.preventDefault();
+    e.preventDefault(); // Mencegah reload halaman
 
-    // Validate form
+    // Validasi form, nama dan harga wajib diisi
     if (!formData.name || !formData.price) {
       toast.error("Name and price are required");
       return;
@@ -243,22 +266,23 @@ export default function Products() {
         throw new Error(error.message || "Failed to update product");
       }
 
-      const updatedProduct = await response.json();
+      const updatedProduct = await response.json(); // Ambil data produk yang sudah diupdate
 
       setProducts(
         products.map((product) =>
           product.id === currentProduct.id ? updatedProduct : product
         )
-      );
+      ); // Update produk di daftar
 
-      setShowEditModal(false);
-      toast.success("Product updated successfully");
+      setShowEditModal(false); // Tutup modal edit produk
+      toast.success("Product updated successfully"); // Notifikasi sukses
     } catch (error) {
-      console.error("Error updating product:", error);
-      toast.error(error.message || "Failed to update product");
+      console.error("Error updating product:", error); // Tampilkan error di konsol
+      toast.error(error.message || "Failed to update product"); // Notifikasi error
     }
   };
 
+  // Fungsi untuk menghapus produk
   const submitDeleteProduct = async () => {
     try {
       const response = await fetch(`/api/products/${currentProduct.id}`, {
@@ -272,16 +296,16 @@ export default function Products() {
 
       setProducts(
         products.filter((product) => product.id !== currentProduct.id)
-      );
-      setShowDeleteModal(false);
-      toast.success("Product deleted successfully");
+      ); // Hapus produk dari daftar
+      setShowDeleteModal(false); // Tutup modal hapus produk
+      toast.success("Product deleted successfully"); // Notifikasi sukses
     } catch (error) {
-      console.error("Error deleting product:", error);
-      toast.error(error.message || "Failed to delete product");
+      console.error("Error deleting product:", error); // Tampilkan error di konsol
+      toast.error(error.message || "Failed to delete product"); // Notifikasi error
     }
   };
 
-  // Format currency
+  // Fungsi untuk memformat angka ke format mata uang Rupiah
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -617,9 +641,6 @@ export default function Products() {
                       type="text"
                       id="edit-name"
                       name="name"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border- name"
                       value={formData.name}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"

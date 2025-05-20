@@ -11,29 +11,54 @@ const CLEANUP_TYPES = [
   { value: "inactiveUsers", label: "User Tidak Aktif" },
 ];
 
+// Komponen utama untuk halaman pembersihan data
 export default function DataCleanupPage() {
+  // State untuk tipe data yang akan dibersihkan
   const [type, setType] = useState("");
+  // State untuk tanggal batas sebelum data dihapus
   const [beforeDate, setBeforeDate] = useState("");
+  // State untuk status loading
   const [isLoading, setIsLoading] = useState(false);
+  // State untuk hasil proses pembersihan
   const [result, setResult] = useState("");
 
+  // Fungsi untuk submit form pembersihan data
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!type || !beforeDate) {
       toast.error("Pilih jenis data dan tanggal batas!");
       return;
     }
+
     setIsLoading(true);
     setResult("");
+    // Konfirmasi dari user sebelum menjalankan pembersihan data
+    if (
+      !confirm(
+        "Anda yakin ingin menghapus data ini? Data yang dihapus tidak dapat dikembalikan."
+      )
+    ) {
+      return; // Batalkan jika user tidak mengkonfirmasi
+    }
     try {
+      // Kirim request ke endpoint API pembersihan data
       const res = await fetch("/api/data-cleanup", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type, beforeDate }),
+        method: "POST", // Gunakan method POST untuk mengirim data
+        credentials: "include", // Sertakan kredensial (cookies) untuk autentikasi
+        headers: {
+          "Content-Type": "application/json", // Set header content type JSON
+        },
+        body: JSON.stringify({
+          type, // Kirim tipe data yang akan dibersihkan (transactions/auditLogs/dll)
+          beforeDate, // Kirim tanggal batas data yang akan dihapus (format: YYYY-MM-DD)
+        }),
       });
+
       const data = await res.json();
+
       if (!res.ok) throw new Error(data.message);
+
       setResult(data.message);
       toast.success(data.message);
     } catch (err) {

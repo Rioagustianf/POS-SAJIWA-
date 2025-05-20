@@ -19,46 +19,53 @@ import AdminLayout from "@/components/layout/admin-layout";
 import { formatCurrency } from "@/lib/utils";
 
 export default function Dashboard() {
+  // State untuk statistik ringkasan dashboard
   const [stats, setStats] = useState({
-    totalSales: 0,
-    totalOrders: 0,
-    totalProducts: 0,
-    totalUsers: 0,
+    totalSales: 0, // Total penjualan
+    totalOrders: 0, // Total pesanan
+    totalProducts: 0, // Total produk
+    totalUsers: 0, // Total pengguna
   });
 
+  // State untuk data penjualan per hari (untuk chart)
   const [salesData, setSalesData] = useState([]);
+  // State untuk produk terlaris (untuk chart)
   const [topProducts, setTopProducts] = useState([]);
+  // State untuk status loading
   const [isLoading, setIsLoading] = useState(true);
+  // State untuk pesan error
   const [error, setError] = useState(null);
 
+  // Ambil data dashboard saat komponen pertama kali dimount
   useEffect(() => {
+    // Fungsi async untuk mengambil data dashboard
     const fetchDashboardData = async () => {
       try {
-        setIsLoading(true);
+        setIsLoading(true); // Set loading true
 
-        // Fetch products
+        // Ambil data produk dari API
         const productsResponse = await fetch("/api/products");
-        if (!productsResponse.ok) throw new Error("Failed to fetch products");
+        if (!productsResponse.ok) throw new Error("Gagal mengambil produk");
         const products = await productsResponse.json();
 
-        // Fetch transactions
+        // Ambil data transaksi dari API
         const transactionsResponse = await fetch("/api/transactions");
         if (!transactionsResponse.ok)
-          throw new Error("Failed to fetch transactions");
+          throw new Error("Gagal mengambil transaksi");
         const transactions = await transactionsResponse.json();
 
-        // Fetch users
+        // Ambil data user dari API
         const usersResponse = await fetch("/api/users");
-        if (!usersResponse.ok) throw new Error("Failed to fetch users");
+        if (!usersResponse.ok) throw new Error("Gagal mengambil pengguna");
         const users = await usersResponse.json();
 
-        // Calculate total sales from transactions
+        // Hitung total penjualan dari semua transaksi
         const totalSales = transactions.reduce(
           (sum, transaction) => sum + transaction.total,
           0
         );
 
-        // Set stats
+        // Set statistik ringkasan
         setStats({
           totalSales: totalSales,
           totalOrders: transactions.length,
@@ -66,7 +73,7 @@ export default function Dashboard() {
           totalUsers: users.length,
         });
 
-        // Process sales data for chart (group by day)
+        // Proses data penjualan per hari untuk chart (kelompokkan per hari)
         const last7Days = getLast7Days();
         const salesByDay = last7Days.map((day) => {
           const dayTransactions = transactions.filter((t) => {
@@ -82,9 +89,9 @@ export default function Dashboard() {
           };
         });
 
-        setSalesData(salesByDay);
+        setSalesData(salesByDay); // Simpan data penjualan per hari
 
-        // Process top products
+        // Proses produk terlaris
         const productSales = {};
         transactions.forEach((transaction) => {
           transaction.items.forEach((item) => {
@@ -95,25 +102,26 @@ export default function Dashboard() {
           });
         });
 
+        // Ambil 5 produk terlaris
         const topProductsData = Object.entries(productSales)
           .map(([name, value]) => ({ name, value }))
           .sort((a, b) => b.value - a.value)
           .slice(0, 5);
 
-        setTopProducts(topProductsData);
+        setTopProducts(topProductsData); // Simpan produk terlaris
 
-        setIsLoading(false);
+        setIsLoading(false); // Selesai loading
       } catch (error) {
-        console.error("Error fetching dashboard data:", error);
-        setError(error.message);
-        setIsLoading(false);
+        console.error("Error fetching dashboard data:", error); // Tampilkan error di konsol
+        setError(error.message); // Simpan pesan error
+        setIsLoading(false); // Selesai loading
       }
     };
 
-    fetchDashboardData();
+    fetchDashboardData(); // Panggil fungsi ambil data dashboard
   }, []);
 
-  // Helper function to get the last 7 days
+  // Fungsi helper untuk mendapatkan 7 hari terakhir
   const getLast7Days = () => {
     const days = [];
     const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -122,15 +130,15 @@ export default function Dashboard() {
       const date = new Date();
       date.setDate(date.getDate() - i);
       days.push({
-        name: dayNames[date.getDay()],
-        date: date,
+        name: dayNames[date.getDay()], // Nama hari
+        date: date, // Objek tanggal
       });
     }
 
     return days;
   };
 
-  // Colors for pie chart
+  // Warna untuk chart pie
   const COLORS = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
 
   if (isLoading) {
@@ -140,7 +148,7 @@ export default function Dashboard() {
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
             <p className="mt-4 text-muted-foreground">
-              Loading dashboard data...
+              Memuat data dashboard...
             </p>
           </div>
         </div>
@@ -154,14 +162,14 @@ export default function Dashboard() {
         <div className="flex items-center justify-center h-96">
           <div className="text-center">
             <p className="text-red-500 font-medium">
-              Error loading dashboard data
+              Gagal memuat data dashboard
             </p>
             <p className="mt-2 text-muted-foreground">{error}</p>
             <button
               onClick={() => window.location.reload()}
               className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
             >
-              Try Again
+              Coba Lagi
             </button>
           </div>
         </div>

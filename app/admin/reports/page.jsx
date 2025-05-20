@@ -34,46 +34,54 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
+// Komponen utama untuk halaman laporan admin
 export default function Reports() {
+  // State untuk menyimpan rentang tanggal yang dipilih
   const [dateRange, setDateRange] = useState({
     start: format(subDays(new Date(), 30), "yyyy-MM-dd"),
     end: format(new Date(), "yyyy-MM-dd"),
   });
+  // State untuk tipe laporan yang dipilih (penjualan, produk, kategori)
   const [reportType, setReportType] = useState("sales");
+  // State untuk data laporan yang diambil dari server
   const [reportData, setReportData] = useState(null);
+  // State untuk status loading saat mengambil data
   const [isLoading, setIsLoading] = useState(false);
+  // State untuk menyimpan pesan error jika terjadi kesalahan
   const [error, setError] = useState(null);
+  // State untuk menyimpan peran user (misal: admin, manajer)
   const [userRole, setUserRole] = useState(null);
   const router = useRouter();
 
+  // useEffect untuk memeriksa peran user saat pertama kali halaman dibuka
   useEffect(() => {
-    // Periksa role pengguna
-    checkUserRole();
+    checkUserRole(); // Panggil fungsi cek peran user saat komponen mount
   }, []);
 
+  // useEffect untuk mengambil data laporan setiap kali rentang tanggal atau tipe laporan berubah
   useEffect(() => {
-    fetchReportData();
+    fetchReportData(); // Ambil data laporan setiap kali dateRange atau reportType berubah
   }, [dateRange, reportType]);
 
+  // Fungsi untuk memeriksa peran user dengan memanggil API
   const checkUserRole = async () => {
     try {
-      const response = await fetch("/api/auth/me");
+      const response = await fetch("/api/auth/me"); // Panggil API untuk data user
       if (!response.ok) {
-        throw new Error("Failed to fetch user data");
+        throw new Error("Gagal mengambil data user"); // Jika gagal, lempar error
       }
-
-      const userData = await response.json();
+      const userData = await response.json(); // Ambil data user
       const roles = userData.roles || [];
-      setUserRole(roles);
+      setUserRole(roles); // Simpan peran user ke state
     } catch (error) {
-      console.error("Error checking user role:", error);
+      console.error("Error checking user role:", error); // Tampilkan error di konsol
     }
   };
 
-  // Fungsi untuk mengekspor PDF
+  // Fungsi untuk mengekspor laporan ke PDF
   const exportToPDF = () => {
     try {
-      // Inisialisasi jsPDF
+      // Membuat dokumen PDF baru
       const doc = new jsPDF();
 
       // Tambahkan header
@@ -82,17 +90,17 @@ export default function Reports() {
 
       doc.setFontSize(14);
       let reportTitle = "";
-      if (reportType === "sales") reportTitle = "Sales Report";
-      if (reportType === "products") reportTitle = "Product Report";
-      if (reportType === "categories") reportTitle = "Category Report";
+      if (reportType === "sales") reportTitle = "Laporan Penjualan";
+      if (reportType === "products") reportTitle = "Laporan Produk";
+      if (reportType === "categories") reportTitle = "Laporan Kategori";
       doc.text(reportTitle, 105, 25, { align: "center" });
 
       doc.setFontSize(10);
-      doc.text(`Period: ${dateRange.start} to ${dateRange.end}`, 105, 35, {
+      doc.text(`Periode: ${dateRange.start} s/d ${dateRange.end}`, 105, 35, {
         align: "center",
       });
       doc.text(
-        `Generated on: ${format(new Date(), "yyyy-MM-dd HH:mm:ss")}`,
+        `Dibuat pada: ${format(new Date(), "yyyy-MM-dd HH:mm:ss")}`,
         105,
         42,
         { align: "center" }
@@ -100,7 +108,7 @@ export default function Reports() {
 
       // Tambahkan ringkasan
       doc.setFontSize(12);
-      doc.text("Summary", 14, 55);
+      doc.text("Ringkasan", 14, 55);
 
       if (reportType === "sales") {
         // Format currency
@@ -114,10 +122,10 @@ export default function Reports() {
 
         // Tabel ringkasan
         const summaryData = [
-          ["Total Sales", formatCurrency(reportData.summary.totalSales)],
-          ["Total Orders", reportData.summary.totalOrders.toString()],
+          ["Total Penjualan", formatCurrency(reportData.summary.totalSales)],
+          ["Total Pesanan", reportData.summary.totalOrders.toString()],
           [
-            "Average Order Value",
+            "Rata-rata Nilai Pesanan",
             formatCurrency(reportData.summary.averageSale),
           ],
         ];
@@ -125,7 +133,7 @@ export default function Reports() {
         // Gunakan autoTable dari jspdf-autotable
         autoTable(doc, {
           startY: 60,
-          head: [["Metric", "Value"]],
+          head: [["Metrik", "Nilai"]],
           body: summaryData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
@@ -135,7 +143,7 @@ export default function Reports() {
       // Tambahkan data detail
       const startY = reportType === "sales" ? 100 : 60;
       doc.setFontSize(12);
-      doc.text("Detailed Data", 14, startY - 5);
+      doc.text("Data Detail", 14, startY - 5);
 
       if (reportType === "sales") {
         const tableData = reportData.salesData.map((item) => [
@@ -155,7 +163,7 @@ export default function Reports() {
 
         autoTable(doc, {
           startY: startY,
-          head: [["Date", "Sales", "Orders", "Avg. Order Value"]],
+          head: [["Tanggal", "Penjualan", "Pesanan", "Rata-rata Pesanan"]],
           body: tableData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
@@ -182,7 +190,7 @@ export default function Reports() {
 
         autoTable(doc, {
           startY: startY,
-          head: [["Product", "Quantity Sold", "Revenue", "% of Total"]],
+          head: [["Produk", "Jumlah Terjual", "Pendapatan", "% dari Total"]],
           body: tableData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
@@ -209,7 +217,7 @@ export default function Reports() {
 
         autoTable(doc, {
           startY: startY,
-          head: [["Category", "Quantity Sold", "Revenue", "% of Total"]],
+          head: [["Kategori", "Jumlah Terjual", "Pendapatan", "% dari Total"]],
           body: tableData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
@@ -230,7 +238,7 @@ export default function Reports() {
           }
         );
         doc.text(
-          "This report is generated automatically by the system",
+          "Laporan ini dihasilkan secara otomatis oleh sistem",
           105,
           doc.internal.pageSize.height - 15,
           {
@@ -238,7 +246,7 @@ export default function Reports() {
           }
         );
         doc.text(
-          `Page ${i} of ${pageCount}`,
+          `Halaman ${i} dari ${pageCount}`,
           doc.internal.pageSize.width - 20,
           doc.internal.pageSize.height - 10
         );
@@ -340,10 +348,6 @@ export default function Reports() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   // Format currency
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("id-ID", {
@@ -374,10 +378,6 @@ export default function Reports() {
             <Button onClick={exportToPDF} disabled={!reportData}>
               <Download className="h-4 w-4 mr-2" />
               Export PDF
-            </Button>
-            <Button onClick={handlePrint} variant="outline">
-              <Printer className="h-4 w-4 mr-2" />
-              Print
             </Button>
             {userRole && userRole.includes("Manajer") && (
               <Link href="/admin/print-reports">
@@ -497,24 +497,6 @@ export default function Reports() {
                 Category Report
               </button>
             </div>
-          </div>
-        </div>
-
-        {/* Print Header - Only visible when printing */}
-        <div className="hidden print:block print:mb-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold">Sajiwa Steak Restaurant</h1>
-            <h2 className="text-xl font-semibold mt-1">
-              {reportType === "sales" && "Sales Report"}
-              {reportType === "products" && "Product Report"}
-              {reportType === "categories" && "Category Report"}
-            </h2>
-            <p className="text-muted-foreground mt-1">
-              Period: {dateRange.start} to {dateRange.end}
-            </p>
-            <p className="text-muted-foreground mt-1">
-              Generated on: {format(new Date(), "yyyy-MM-dd HH:mm:ss")}
-            </p>
           </div>
         </div>
 
@@ -799,14 +781,6 @@ export default function Reports() {
                     </tbody>
                   </table>
                 )}
-              </div>
-            </div>
-
-            {/* Print Footer - Only visible when printing */}
-            <div className="hidden print:block print:mt-8">
-              <div className="text-center text-sm text-muted-foreground">
-                <p>Sajiwa Steak Restaurant - {format(new Date(), "yyyy")}</p>
-                <p>This report is generated automatically by the system</p>
               </div>
             </div>
           </>

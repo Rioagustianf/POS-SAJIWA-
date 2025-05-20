@@ -18,11 +18,11 @@ import exportAuditLogToPDF from "@/lib/exportAuditLogToPDF"; // Fungsi export ke
 // Komponen utama halaman AuditLogs
 export default function AuditLogs() {
   // State untuk menyimpan data log audit
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<any[]>([]); // Menyimpan data log audit
   // State untuk status loading (sedang mengambil data atau tidak)
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(true); // Status loading
   // State untuk kata kunci pencarian
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState(""); // Kata kunci pencarian
   // State untuk filter (nama tabel, aksi, user, tanggal)
   const [filters, setFilters] = useState({
     tableName: "",
@@ -30,32 +30,32 @@ export default function AuditLogs() {
     userId: "",
     startDate: "",
     endDate: "",
-  });
+  }); // Menyimpan filter yang digunakan
   // State untuk menampilkan/menyembunyikan filter
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(false); // Tampilkan/sembunyikan filter
   // State untuk pagination (halaman, limit, total data, total halaman)
   const [pagination, setPagination] = useState({
     page: 1,
     limit: 50,
     total: 0,
     totalPages: 0,
-  });
+  }); // Menyimpan data pagination
   // State untuk log yang dipilih (untuk detail)
-  const [selectedLog, setSelectedLog] = useState(null);
+  const [selectedLog, setSelectedLog] = useState<any>(null); // Log yang dipilih untuk detail
   // State untuk menampilkan/menyembunyikan modal detail log
-  const [showLogModal, setShowLogModal] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false); // Tampilkan/sembunyikan modal detail
   // State untuk daftar user (untuk filter)
-  const [users, setUsers] = useState([]);
+  const [users, setUsers] = useState<any[]>([]); // Daftar user untuk filter
   // State untuk daftar nama tabel (untuk filter)
-  const [tableNames, setTableNames] = useState([]);
+  const [tableNames, setTableNames] = useState<string[]>([]); // Daftar nama tabel
   // State untuk daftar aksi (hanya CREATE, UPDATE, DELETE)
-  const [actions, setActions] = useState(["CREATE", "UPDATE", "DELETE"]);
+  const [actions, setActions] = useState(["CREATE", "UPDATE", "DELETE"]); // Daftar aksi
 
   // useEffect: otomatis jalankan fetchAuditLogs dan fetchUsers saat halaman load atau filter/pagination berubah
   useEffect(() => {
-    fetchAuditLogs();
-    fetchUsers();
-  }, [pagination.page, filters]);
+    fetchAuditLogs(); // Ambil data log audit
+    fetchUsers(); // Ambil data user
+  }, [pagination.page, filters]); // Jalankan ulang jika pagination.page atau filters berubah
 
   // Fungsi mengambil data audit log dari API
   const fetchAuditLogs = async () => {
@@ -63,39 +63,35 @@ export default function AuditLogs() {
     try {
       // Siapkan parameter query dari pagination dan filter
       const params = new URLSearchParams({
-        page: pagination.page,
-        limit: pagination.limit,
+        page: String(pagination.page),
+        limit: String(pagination.limit),
       });
-
       // Tambahkan filter jika ada isinya
       if (filters.tableName) params.append("tableName", filters.tableName);
       if (filters.action) params.append("action", filters.action);
       if (filters.userId) params.append("userId", filters.userId);
       if (filters.startDate) params.append("startDate", filters.startDate);
       if (filters.endDate) params.append("endDate", filters.endDate);
-
       // Ambil data dari API
       const response = await fetch(`/api/audit-logs?${params.toString()}`, {
         method: "GET",
         credentials: "include",
       });
-
       // Jika gagal, lempar error
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
       // Ambil data JSON dari response
       const data = await response.json();
       setLogs(data.logs); // Simpan log ke state
       setPagination(data.pagination); // Simpan pagination ke state
-
       // Ambil nama tabel unik dari data log untuk filter
-      const uniqueTableNames = [
-        ...new Set(data.logs.map((log) => log.tableName)),
-      ];
-      setTableNames(uniqueTableNames);
-
+      const uniqueTableNames = Array.from(
+        new Set(data.logs.map((log: any) => log.tableName))
+      )
+        .filter(Boolean)
+        .map(String);
+      setTableNames(uniqueTableNames); // Simpan nama tabel unik
       setIsLoading(false); // Selesai loading
     } catch (error) {
       console.error("Error fetching audit logs:", error);
@@ -111,11 +107,9 @@ export default function AuditLogs() {
         method: "GET",
         credentials: "include",
       });
-
       if (!response.ok) {
         throw new Error(`HTTP error! Status: ${response.status}`);
       }
-
       const data = await response.json();
       setUsers(data); // Simpan user ke state
     } catch (error) {
@@ -124,22 +118,24 @@ export default function AuditLogs() {
   };
 
   // Fungsi ketika user mengetik di kolom pencarian
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value); // Simpan kata kunci pencarian
   };
 
   // Fungsi ketika filter diubah
-  const handleFilterChange = (e) => {
-    const { name, value } = e.target;
+  const handleFilterChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target; // Ambil nama dan nilai input
     setFilters({
-      ...filters,
-      [name]: value,
+      ...filters, // Salin filter sebelumnya
+      [name]: value, // Update field yang berubah
     });
   };
 
   // Fungsi untuk menerapkan filter, reset ke halaman 1
   const applyFilters = () => {
-    setPagination({ ...pagination, page: 1 });
+    setPagination({ ...pagination, page: 1 }); // Reset ke halaman 1
   };
 
   // Fungsi untuk mereset semua filter ke default
@@ -150,21 +146,21 @@ export default function AuditLogs() {
       userId: "",
       startDate: "",
       endDate: "",
-    });
-    setPagination({ ...pagination, page: 1 });
+    }); // Reset semua filter
+    setPagination({ ...pagination, page: 1 }); // Reset ke halaman 1
   };
 
   // Fungsi untuk pindah halaman pada pagination
-  const handlePageChange = (newPage) => {
+  const handlePageChange = (newPage: number) => {
     if (newPage > 0 && newPage <= pagination.totalPages) {
-      setPagination({ ...pagination, page: newPage });
+      setPagination({ ...pagination, page: newPage }); // Pindah ke halaman baru
     }
   };
 
   // Fungsi untuk menampilkan detail log di modal
-  const viewLogDetails = (log) => {
-    setSelectedLog(log);
-    setShowLogModal(true);
+  const viewLogDetails = (log: any) => {
+    setSelectedLog(log); // Simpan log yang dipilih
+    setShowLogModal(true); // Tampilkan modal detail
   };
 
   // Fungsi untuk export data log yang difilter ke PDF
@@ -173,33 +169,33 @@ export default function AuditLogs() {
       ...(filters.tableName && { Table: filters.tableName }),
       ...(filters.action && { Action: filters.action }),
       ...(filters.userId && {
-        User: users.find((u) => u.id == filters.userId)?.username,
+        User: users.find((u: any) => u.id == filters.userId)?.username,
       }),
       ...(filters.startDate && { "Start Date": filters.startDate }),
       ...(filters.endDate && { "End Date": filters.endDate }),
-    });
+    }); // Ekspor data ke PDF
   };
 
   // Filter log berdasarkan kata kunci pencarian
-  const filteredLogs = logs.filter((log) => {
+  const filteredLogs = logs.filter((log: any) => {
     return (
       log.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.tableName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.user.username?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       log.action?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    ); // Return true jika cocok pencarian
   });
 
   // Fungsi untuk menampilkan data JSON dengan format rapi
-  const formatJSON = (jsonData) => {
+  const formatJSON = (jsonData: any) => {
     try {
-      if (!jsonData) return "No data";
+      if (!jsonData) return "No data"; // Jika tidak ada data
       if (typeof jsonData === "string") {
-        return JSON.stringify(JSON.parse(jsonData), null, 2);
+        return JSON.stringify(JSON.parse(jsonData), null, 2); // Parse string ke JSON
       }
-      return JSON.stringify(jsonData, null, 2);
+      return JSON.stringify(jsonData, null, 2); // Format JSON
     } catch (error) {
-      return String(jsonData);
+      return String(jsonData); // Jika gagal, tampilkan string apa adanya
     }
   };
 
@@ -306,13 +302,13 @@ export default function AuditLogs() {
                 <select
                   id="userId"
                   name="userId"
-                  value={filters.userId}
+                  value={String(filters.userId)}
                   onChange={handleFilterChange}
                   className="w-full px-3 py-2 border border-input rounded-md bg-background"
                 >
                   <option value="">All Users</option>
                   {users.map((user) => (
-                    <option key={user.id} value={user.id}>
+                    <option key={user.id} value={String(user.id)}>
                       {user.username}
                     </option>
                   ))}

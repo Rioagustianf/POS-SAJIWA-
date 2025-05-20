@@ -1,40 +1,45 @@
-"use client"
+"use client";
 
-import { useState } from 'react';
-import { 
-  Save, 
-  User, 
-  Lock, 
-  Store, 
-  Phone, 
-  Mail, 
+import { useState } from "react";
+import {
+  Save,
+  User,
+  Lock,
+  Store,
+  Phone,
+  Mail,
   MapPin,
   Globe,
-  Clock
-} from 'lucide-react';
-import { toast } from 'sonner';
-import AdminLayout from '@/components/layout/admin-layout';
+  Clock,
+} from "lucide-react";
+import { toast } from "sonner";
+import AdminLayout from "@/components/layout/admin-layout";
 
+// Komponen utama untuk halaman pengaturan
 export default function Settings() {
+  // State untuk pengaturan umum restoran
   const [generalSettings, setGeneralSettings] = useState({
-    restaurantName: 'Sajiwa Steak Restaurant',
-    phone: '+62 812 3456 7890',
-    email: 'info@sajiwasteak.com',
-    address: 'Jl. Gatot Subroto No. 123, Jakarta Selatan',
-    website: 'www.sajiwasteak.com',
-    openingHours: '10:00 - 22:00',
-    taxRate: '0',
-    currency: 'IDR',
+    restaurantName: "Sajiwa Steak Restaurant",
+    phone: "+62 812 3456 7890",
+    email: "info@sajiwasteak.com",
+    address: "Jl. Gatot Subroto No. 123, Jakarta Selatan",
+    website: "www.sajiwasteak.com",
+    openingHours: "10:00 - 22:00",
+    taxRate: "0",
+    currency: "IDR",
   });
-  
+
+  // State untuk pengaturan password
   const [passwordSettings, setPasswordSettings] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
-  
+
+  // State untuk status loading
   const [isLoading, setIsLoading] = useState(false);
-  
+
+  // Fungsi untuk menangani perubahan input pengaturan umum
   const handleGeneralChange = (e) => {
     const { name, value } = e.target;
     setGeneralSettings({
@@ -42,7 +47,8 @@ export default function Settings() {
       [name]: value,
     });
   };
-  
+
+  // Fungsi untuk menangani perubahan input password
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordSettings({
@@ -50,51 +56,53 @@ export default function Settings() {
       [name]: value,
     });
   };
-  
+
+  // Fungsi untuk menyimpan pengaturan umum
   const saveGeneralSettings = (e) => {
     e.preventDefault();
     setIsLoading(true);
-    
-    // Simulate API call
+
+    // Simulasi panggilan API
     setTimeout(() => {
       setIsLoading(false);
-      toast.success('General settings saved successfully');
+      toast.success("Pengaturan umum berhasil disimpan");
     }, 1000);
   };
-  
+
+  // Fungsi untuk mengganti password
   const changePassword = (e) => {
     e.preventDefault();
-    
-    // Validate passwords
+
+    // Validasi password baru
     if (passwordSettings.newPassword !== passwordSettings.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error("Password baru tidak cocok");
       return;
     }
-    
+
     if (passwordSettings.newPassword.length < 6) {
-      toast.error('Password must be at least 6 characters long');
+      toast.error("Password minimal 6 karakter");
       return;
     }
-    
+
     setIsLoading(true);
-    
-    // Simulate API call
+
+    // Simulasi panggilan API
     setTimeout(() => {
       setIsLoading(false);
       setPasswordSettings({
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: '',
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
       });
-      toast.success('Password changed successfully');
+      toast.success("Password berhasil diganti");
     }, 1000);
   };
-  
+
   return (
     <AdminLayout>
       <div className="space-y-6">
         <h1 className="text-3xl font-bold">Settings</h1>
-        
+
         {/* General Settings */}
         <div className="bg-card rounded-lg shadow overflow-hidden">
           <div className="p-4 border-b border-border">
@@ -103,11 +111,14 @@ export default function Settings() {
               Manage your restaurant information
             </p>
           </div>
-          
+
           <form onSubmit={saveGeneralSettings} className="p-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label htmlFor="restaurantName" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="restaurantName"
+                  className="block text-sm font-medium mb-1"
+                >
                   Restaurant Name
                 </label>
                 <div className="relative">
@@ -122,9 +133,12 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="phone"
+                  className="block text-sm font-medium mb-1"
+                >
                   Phone Number
                 </label>
                 <div className="relative">
@@ -139,9 +153,12 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label htmlFor="email" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="email"
+                  className="block text-sm font-medium mb-1"
+                >
                   Email Address
                 </label>
                 <div className="relative">
@@ -156,9 +173,12 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label htmlFor="website" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="website"
+                  className="block text-sm font-medium mb-1"
+                >
                   Website
                 </label>
                 <div className="relative">
@@ -173,9 +193,12 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label htmlFor="openingHours" className="block text-sm font-medium mb-1">
+                <label
+                  htmlFor="openingHours"
+                  className="block text-sm font-medium mb-1"
+                >
                   Opening Hours
                 </label>
                 <div className="relative">
@@ -190,6 +213,48 @@ export default function Settings() {
                   />
                 </div>
               </div>
-              
+
               <div>
-                <label htmlFor="taxRate" className="
+                <label
+                  htmlFor="taxRate"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Tax Rate
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="taxRate"
+                    name="taxRate"
+                    value={generalSettings.taxRate}
+                    onChange={handleGeneralChange}
+                    className="pl-9 pr-4 py-2 border border-input rounded-md w-full bg-background"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="currency"
+                  className="block text-sm font-medium mb-1"
+                >
+                  Currency
+                </label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    id="currency"
+                    name="currency"
+                    value={generalSettings.currency}
+                    onChange={handleGeneralChange}
+                    className="pl-9 pr-4 py-2 border border-input rounded-md w-full bg-background"
+                  />
+                </div>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </AdminLayout>
+  );
+}

@@ -1,6 +1,9 @@
+// Menandai bahwa komponen ini berjalan di sisi klien
 "use client";
 
+// Import hooks yang diperlukan dari React
 import { useState, useEffect, useRef } from "react";
+// Import icon-icon yang diperlukan dari library Lucide
 import {
   ShoppingCart,
   Plus,
@@ -11,90 +14,127 @@ import {
   Banknote,
   Receipt,
 } from "lucide-react";
+// Import komponen toast untuk notifikasi
 import { toast } from "react-toastify";
+// Import komponen Image dari Next.js untuk optimasi gambar
 import Image from "next/image";
-// The sidebar is now handled by the layout file
+// Komentar bahwa sidebar ditangani oleh layout
 
+// Mendefinisikan dan mengekspor komponen utama POS
 export default function POS() {
+  // State untuk menyimpan daftar produk
   const [products, setProducts] = useState([]);
+  // State untuk menyimpan item dalam keranjang
   const [cart, setCart] = useState([]);
+  // State untuk menyimpan kata kunci pencarian
   const [searchTerm, setSearchTerm] = useState("");
+  // State untuk menandai proses loading
   const [isLoading, setIsLoading] = useState(true);
+  // State untuk mengontrol tampilan modal pembayaran
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  // State untuk mengontrol tampilan modal struk
   const [showReceiptModal, setShowReceiptModal] = useState(false);
+  // State untuk menyimpan metode pembayaran yang dipilih
   const [paymentMethod, setPaymentMethod] = useState("");
+  // State untuk menyimpan daftar transaksi
   const [transactions, setTransactions] = useState([]);
+  // State untuk menyimpan jumlah uang tunai
   const [cashAmount, setCashAmount] = useState("");
+  // State untuk menyimpan data struk
   const [receiptData, setReceiptData] = useState(null);
+  // State untuk menyimpan daftar kategori
   const [categories, setCategories] = useState([]);
+  // State untuk menyimpan kategori yang dipilih
   const [selectedCategory, setSelectedCategory] = useState("All");
+  // State untuk menyimpan data user
   const [user, setUser] = useState(null);
 
-  // Tambahan untuk auto print
+  // Ref untuk elemen struk yang akan dicetak
   const receiptRef = useRef(null);
+  // State untuk mengontrol auto print
   const [autoPrint, setAutoPrint] = useState(false);
 
+  // Effect untuk fetch data produk dan user saat komponen dimount
   useEffect(() => {
-    // Simulate fetching products and user data
+    // Fungsi untuk fetch data
     const fetchData = async () => {
       try {
-        // Fetch user data
+        // Fetch data user dari API
         const userResponse = await fetch("/api/auth/me");
+        // Jika response berhasil, simpan data user
         if (userResponse.ok) {
           const userData = await userResponse.json();
           setUser(userData.user);
         }
 
-        // Fetch products
+        // Fetch data produk dari API
         const productsResponse = await fetch("/api/products");
         const fetchedProducts = await productsResponse.json();
+        // Set data produk ke state
         setProducts(fetchedProducts);
 
+        // Buat array kategori unik termasuk "All"
         const uniqueCategories = [
           "All",
           ...new Set(fetchedProducts.map((product) => product.category)),
         ];
+        // Set kategori ke state
         setCategories(uniqueCategories);
 
+        // Matikan loading state
         setIsLoading(false);
       } catch (error) {
+        // Log error dan tampilkan notifikasi jika terjadi kesalahan
         console.error("Error fetching data:", error);
         toast.error("Failed to load data");
         setIsLoading(false);
       }
     };
 
+    // Jalankan fungsi fetchData
     fetchData();
-  }, []);
+  }, []); // Dependencies kosong, effect hanya dijalankan sekali
 
+  // Handler untuk update state searchTerm saat pencarian
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Handler untuk mengubah kategori yang dipilih
   const handleCategoryChange = (category) => {
     setSelectedCategory(category);
   };
 
+  // Filter produk berdasarkan pencarian dan kategori
   const filteredProducts = products.filter((product) => {
+    // Cek apakah nama produk cocok dengan pencarian
     const matchesSearch = product.name
       .toLowerCase()
       .includes(searchTerm.toLowerCase());
+    // Cek apakah kategori cocok atau "All" dipilih
     const matchesCategory =
       selectedCategory === "All" || product.category === selectedCategory;
+    // Kembalikan true jika kedua kondisi terpenuhi
     return matchesSearch && matchesCategory;
   });
 
+  // Handler untuk menambah item ke keranjang
   const addToCart = (product) => {
+    // Cek apakah item sudah ada di keranjang
     const existingItem = cart.find((item) => item.id === product.id);
 
+    // Jika item sudah ada di keranjang
     if (existingItem) {
+      // Cek apakah stok mencukupi
       if (existingItem.quantity >= product.stock) {
+        // Tampilkan pesan error jika stok tidak cukup
         toast.error(
           `Cannot add more. Only ${product.stock} available in stock.`
         );
         return;
       }
 
+      // Update quantity item yang sudah ada
       const updatedCart = cart.map((item) =>
         item.id === product.id
           ? {
@@ -106,11 +146,14 @@ export default function POS() {
       );
       setCart(updatedCart);
     } else {
+      // Cek apakah produk masih ada stok
       if (product.stock <= 0) {
+        // Tampilkan pesan error jika stok habis
         toast.error("Product is out of stock");
         return;
       }
 
+      // Tambahkan item baru ke keranjang
       setCart([
         ...cart,
         {
@@ -123,18 +166,24 @@ export default function POS() {
       ]);
     }
 
+    // Tampilkan notifikasi sukses
     toast.success(`Added ${product.name} to cart`);
   };
 
+  // Handler untuk menambah quantity item di keranjang
   const increaseQuantity = (id) => {
+    // Cari produk dan item di keranjang
     const product = products.find((p) => p.id === id);
     const item = cart.find((item) => item.id === id);
 
+    // Cek apakah stok mencukupi
     if (item.quantity >= product.stock) {
+      // Tampilkan pesan error jika stok tidak cukup
       toast.error(`Cannot add more. Only ${product.stock} available in stock.`);
       return;
     }
 
+    // Update quantity item
     const updatedCart = cart.map((item) =>
       item.id === id
         ? {
@@ -147,14 +196,18 @@ export default function POS() {
     setCart(updatedCart);
   };
 
+  // Handler untuk mengurangi quantity item di keranjang
   const decreaseQuantity = (id) => {
+    // Cari item di keranjang
     const item = cart.find((item) => item.id === id);
 
+    // Hapus item jika quantity akan menjadi 0
     if (item.quantity === 1) {
       removeFromCart(id);
       return;
     }
 
+    // Update quantity item
     const updatedCart = cart.map((item) =>
       item.id === id
         ? {
@@ -167,33 +220,46 @@ export default function POS() {
     setCart(updatedCart);
   };
 
+  // Handler untuk menghapus item dari keranjang
   const removeFromCart = (id) => {
+    // Filter item yang akan dihapus
     const updatedCart = cart.filter((item) => item.id !== id);
     setCart(updatedCart);
+    // Tampilkan notifikasi sukses
     toast.success("Item removed from cart");
   };
 
+  // Handler untuk mengosongkan keranjang
   const clearCart = () => {
     setCart([]);
+    // Tampilkan notifikasi sukses
     toast.success("Cart cleared");
   };
 
+  // Fungsi untuk menghitung total belanja
   const calculateTotal = () => {
     return cart.reduce((total, item) => total + item.subtotal, 0);
   };
 
+  // Handler untuk memulai proses checkout
   const handleCheckout = () => {
+    // Cek apakah keranjang kosong
     if (cart.length === 0) {
+      // Tampilkan pesan error jika keranjang kosong
       toast.error("Cart is empty");
       return;
     }
 
+    // Tampilkan modal pembayaran
     setShowPaymentModal(true);
   };
 
+  // Handler untuk mengubah metode pembayaran
   const handlePaymentMethodChange = (method) => {
+    // Set metode pembayaran yang dipilih
     setPaymentMethod(method);
 
+    // Set jumlah uang tunai sesuai metode pembayaran
     if (method === "cash") {
       setCashAmount("");
     } else {
@@ -201,16 +267,20 @@ export default function POS() {
     }
   };
 
+  // Handler untuk mengubah jumlah uang tunai
   const handleCashAmountChange = (e) => {
     setCashAmount(e.target.value);
   };
 
+  // Handler untuk memproses pembayaran
   const processPayment = async () => {
+    // Validasi metode pembayaran
     if (!paymentMethod) {
       toast.error("Please select a payment method");
       return;
     }
 
+    // Validasi jumlah uang tunai
     if (
       paymentMethod === "cash" &&
       Number.parseInt(cashAmount) < calculateTotal()
@@ -220,6 +290,7 @@ export default function POS() {
     }
 
     try {
+      // Siapkan data transaksi
       const transactionData = {
         items: cart.map((item) => ({
           productId: item.id,
@@ -230,6 +301,7 @@ export default function POS() {
         paymentMethod: paymentMethod,
       };
 
+      // Kirim data transaksi ke API
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: {
@@ -238,18 +310,21 @@ export default function POS() {
         body: JSON.stringify(transactionData),
       });
 
+      // Cek response API
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.message || "Transaction failed");
       }
 
+      // Parse response
       const transaction = await response.json();
 
-      // Calculate service and tax
+      // Hitung service dan pajak
       const serviceAmount = Math.round(calculateTotal() * 0.05);
       const taxAmount = Math.round(calculateTotal() * 0.1);
       const finalTotal = calculateTotal() + serviceAmount + taxAmount;
 
+      // Siapkan data struk
       const receiptData = {
         id: transaction.transaction.id,
         items: cart.map((item) => ({
@@ -269,28 +344,28 @@ export default function POS() {
             : 0,
         date: new Date(),
         cashier: user?.username || "Regina",
-        restaurantName: "Master Chef Restaurant",
-        location: "South Jakarta",
-        tableNumber: "01",
-        pax: "4",
-        customerName: "Henderson",
+        restaurantName: "Sajiwa Mie Hotplate & steak",
+        location:
+          "Jl. Kiyai H. Mansyur, RT.04/RW.07, Solokanjeruk, Kec. Solokanjeruk,",
       };
 
+      // Update state untuk menampilkan struk
       setReceiptData(receiptData);
       setShowPaymentModal(false);
       setShowReceiptModal(true);
 
-      // Refresh transactions
+      // Refresh data transaksi
       const transactionsResponse = await fetch("/api/transactions");
       const fetchedTransactions = await transactionsResponse.json();
       setTransactions(fetchedTransactions);
     } catch (error) {
+      // Log error dan tampilkan notifikasi jika terjadi kesalahan
       console.error("Payment processing error:", error);
       toast.error(error.message || "Transaction failed");
     }
   };
 
-  // --- AUTO PRINT RECEIPT LOGIC ---
+  // Effect untuk auto print struk
   useEffect(() => {
     if (showReceiptModal && receiptData) {
       setTimeout(() => {
@@ -299,6 +374,7 @@ export default function POS() {
     }
   }, [showReceiptModal, receiptData]);
 
+  // Effect untuk menangani auto print
   useEffect(() => {
     if (autoPrint && receiptRef.current) {
       printReceipt();
@@ -307,9 +383,13 @@ export default function POS() {
     // eslint-disable-next-line
   }, [autoPrint]);
 
+  // Fungsi untuk mencetak struk
   const printReceipt = () => {
+    // Ambil konten struk
     const printContents = receiptRef.current.innerHTML;
+    // Buka window baru untuk print
     const win = window.open("", "Print", "width=400,height=600");
+    // Tulis konten HTML ke window print
     win.document.write(`
     <html>
       <head>
@@ -420,9 +500,6 @@ export default function POS() {
             receiptData.location || "South Jakarta"
           }</div>
           
-          <div class="order-type">Dine in / Table ${
-            receiptData.tableNumber || "01"
-          } / Pax ${receiptData.pax || "4"}</div>
           
           <div class="separator"></div>
           
@@ -445,11 +522,7 @@ export default function POS() {
             <span>${receiptData.id}</span>
           </div>
           
-          <div class="receipt-info">
-            <span>Customer name</span>
-            <span>${receiptData.customerName || "Henderson"}</span>
-          </div>
-          
+    
           <div class="separator"></div>
           
           <div class="items">
@@ -542,24 +615,30 @@ export default function POS() {
       </body>
     </html>
   `);
+    // Tutup dokumen
     win.document.close();
+    // Fokus ke window print
     win.focus();
+    // Print setelah delay
     setTimeout(() => {
       win.print();
       win.close();
     }, 300);
   };
 
+  // Handler untuk menyelesaikan transaksi
   const finishTransaction = () => {
+    // Reset semua state terkait transaksi
     setShowReceiptModal(false);
     setCart([]);
     setPaymentMethod("");
     setCashAmount("");
     setReceiptData(null);
+    // Tampilkan notifikasi sukses
     toast.success("Transaction completed successfully");
   };
 
-  // Format currency
+  // Fungsi untuk memformat mata uang
   const formatCurrency = (value) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
@@ -568,6 +647,7 @@ export default function POS() {
     }).format(value);
   };
 
+  // Render komponen
   return (
     <div className="p-4 md:p-6 flex-1 flex flex-col">
       <h1 className="text-3xl font-bold mb-6">Point of Sale</h1>

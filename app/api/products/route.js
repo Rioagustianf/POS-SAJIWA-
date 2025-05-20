@@ -1,85 +1,87 @@
-import { NextResponse } from "next/server";
-import prisma from "@/lib/prisma";
-import { getSession } from "@/lib/auth";
+// Import komponen yang dibutuhkan
+import { NextResponse } from "next/server"; // Untuk menangani response API
+import prisma from "@/lib/prisma"; // Untuk koneksi database
+import { getSession } from "@/lib/auth"; // Untuk mengecek session/login user
 
-// GET: Ambil semua produk
+// Fungsi GET untuk mengambil semua data produk
 export async function GET(request) {
   try {
-    // Ambil semua produk, urutkan berdasarkan nama
+    // Ambil semua produk dari database, urutkan berdasarkan nama (ascending)
     const products = await prisma.product.findMany({
       orderBy: { name: "asc" },
     });
-    return NextResponse.json(products);
+    return NextResponse.json(products); // Kembalikan daftar produk
   } catch (error) {
-    console.error("Error fetching products:", error);
+    console.error("Error fetching products:", error); // Log error ke console
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Internal server error" }, // Kembalikan response error
       { status: 500 }
     );
   }
 }
 
-// POST: Tambah produk baru
+// Fungsi POST untuk menambah produk baru (hanya Admin/Manajer)
 export async function POST(request) {
   try {
-    // Ambil session user
+    // Cek apakah user sudah login dengan mengambil session
     const session = await getSession();
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Ambil data user dan role-nya
+    // Cek role user dengan mengambil data user dan relasinya
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { userRoles: { include: { role: true } } }, // Include relasi role
     });
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const roles = user.userRoles.map((ur) => ur.role.name); // Ambil daftar role
 
-    // Hanya Admin/Manajer yang boleh menambah produk
+    // Validasi role: hanya Admin/Manajer yang boleh menambah produk
     if (!roles.includes("Admin") && !roles.includes("Manajer")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Ambil data produk dari request
+    // Ambil data produk dari request body
     const data = await request.json();
     if (!data.name || !data.price) {
+      // Validasi input yang diperlukan
       return NextResponse.json(
         { message: "Name and price are required" },
         { status: 400 }
       );
     }
 
-    // Simpan produk baru ke database
+    // Buat produk baru di database
     const product = await prisma.product.create({
       data: {
-        name: data.name,
-        price: parseInt(data.price),
-        stock: data.stock ? parseInt(data.stock) : 0,
-        description: data.description || null,
-        category: data.category || null,
-        image: data.image || null,
-        createdById: session.id,
-        updatedById: session.id,
+        name: data.name, // Nama produk
+        price: parseInt(data.price), // Harga (konversi ke integer)
+        stock: data.stock ? parseInt(data.stock) : 0, // Stok (default 0)
+        description: data.description || null, // Deskripsi (opsional)
+        category: data.category || null, // Kategori (opsional)
+        image: data.image || null, // URL gambar (opsional)
+        createdById: session.id, // ID user yang membuat
+        updatedById: session.id, // ID user yang terakhir update
       },
     });
 
-    // Catat aktivitas ke audit log
+    // Catat aktivitas pembuatan produk ke audit log
     await prisma.auditLog.create({
       data: {
-        userId: session.id,
-        action: "CREATE",
-        description: `Created product: ${data.name}`,
-        tableName: "Product",
-        recordId: product.id,
-        newData: JSON.stringify(product),
+        userId: session.id, // ID user yang membuat
+        action: "CREATE", // Tipe aksi
+        description: `Created product: ${data.name}`, // Deskripsi aksi
+        tableName: "Product", // Nama tabel
+        recordId: product.id, // ID record yang dibuat
+        newData: JSON.stringify(product), // Data produk yang dibuat
       },
     });
 
-    return NextResponse.json(product, { status: 201 });
+    return NextResponse.json(product, { status: 201 }); // Kembalikan data produk yang dibuat
   } catch (error) {
-    console.error("Error creating product:", error);
+    console.error("Error creating product:", error); // Log error ke console
     return NextResponse.json(
-      { message: "Internal server error" },
+      { message: "Internal server error" }, // Kembalikan response error
       { status: 500 }
     );
   }

@@ -6,67 +6,88 @@ import { toast } from "sonner";
 import AdminLayout from "@/components/layout/admin-layout";
 
 export default function Users() {
+  // State untuk menyimpan daftar user yang diambil dari backend
   const [users, setUsers] = useState([]);
+  // State untuk menandai apakah data sedang dimuat (loading)
   const [isLoading, setIsLoading] = useState(true);
+  // State untuk menyimpan kata kunci pencarian user
   const [searchTerm, setSearchTerm] = useState("");
+  // State untuk menampilkan atau menyembunyikan modal tambah user
   const [showAddModal, setShowAddModal] = useState(false);
+  // State untuk menampilkan atau menyembunyikan modal edit user
   const [showEditModal, setShowEditModal] = useState(false);
+  // State untuk menampilkan atau menyembunyikan modal hapus user
   const [showDeleteModal, setShowDeleteModal] = useState(false);
+  // State untuk menyimpan user yang sedang dipilih (untuk edit/hapus)
   const [currentUser, setCurrentUser] = useState(null);
+  // State untuk menyimpan data form (tambah/edit user)
   const [formData, setFormData] = useState({
     username: "",
     password: "",
     role: "CASHIER",
   });
 
+  // useEffect dijalankan sekali saat komponen pertama kali dimuat
   useEffect(() => {
-    // Fetch users from API
+    // Fungsi async untuk mengambil data user dari backend
     const fetchUsers = async () => {
-      setIsLoading(true);
+      setIsLoading(true); // Set loading menjadi true agar muncul animasi loading
       try {
+        // Mengambil data user dari endpoint /api/users dengan method GET
         const response = await fetch("/api/users", {
           method: "GET",
-          credentials: "include", // Penting untuk mengirim cookies autentikasi
+          credentials: "include", // Mengirim cookie autentikasi
           headers: {
             "Content-Type": "application/json",
           },
         });
 
+        // Jika response tidak berhasil, lempar error
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status}`);
         }
 
+        // Mengubah response menjadi data JSON
         const data = await response.json();
-        setUsers(data);
-        setIsLoading(false);
+        setUsers(data); // Simpan data user ke state users
+        setIsLoading(false); // Set loading menjadi false agar loading hilang
       } catch (error) {
+        // Jika terjadi error, tampilkan pesan error di konsol dan notifikasi
         console.error("Error fetching users:", error);
-        toast.error("Failed to load users");
-        setIsLoading(false);
+        toast.error("Gagal memuat data user");
+        setIsLoading(false); // Set loading menjadi false
       }
     };
 
-    fetchUsers();
+    fetchUsers(); // Memanggil fungsi untuk mengambil data user dari backend
   }, []);
 
+  // Fungsi untuk menangani perubahan input pencarian
+  // Akan mengubah nilai searchTerm sesuai input user
   const handleSearch = (e) => {
     setSearchTerm(e.target.value);
   };
 
+  // Melakukan filter user berdasarkan kata kunci pencarian
+  // Hanya user yang username atau role-nya mengandung kata kunci yang akan ditampilkan
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
       user.role.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Fungsi untuk menangani perubahan input pada form tambah/edit user
+  // Akan mengubah nilai pada formData sesuai input user
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData({
-      ...formData,
-      [name]: value,
+      ...formData, // Menyalin data form sebelumnya
+      [name]: value, // Mengubah field yang sesuai dengan input
     });
   };
 
+  // Fungsi untuk membuka modal tambah user dan mereset form
+  // Akan mengosongkan formData dan menampilkan modal tambah user
   const handleAddUser = () => {
     setFormData({
       username: "",
@@ -76,6 +97,8 @@ export default function Users() {
     setShowAddModal(true);
   };
 
+  // Fungsi untuk membuka modal edit user dan mengisi form dengan data user yang dipilih
+  // Akan mengisi formData dengan data user yang dipilih dan menampilkan modal edit user
   const handleEditUser = (user) => {
     setCurrentUser(user);
     setFormData({
@@ -86,21 +109,24 @@ export default function Users() {
     setShowEditModal(true);
   };
 
+  // Fungsi untuk membuka modal hapus user dan menyimpan user yang akan dihapus
+  // Akan menyimpan user yang dipilih ke currentUser dan menampilkan modal hapus user
   const handleDeleteUser = (user) => {
     setCurrentUser(user);
     setShowDeleteModal(true);
   };
 
+  // Fungsi untuk mengirim data user baru ke backend saat form tambah user disubmit
+  // Jika berhasil, user baru akan ditambahkan ke daftar users dan modal ditutup
   const submitAddUser = async (e) => {
-    e.preventDefault();
-
-    // Validate form
+    e.preventDefault(); // Mencegah reload halaman saat submit
+    // Validasi form, username dan password wajib diisi
     if (!formData.username || !formData.password) {
-      toast.error("Username and password are required");
+      toast.error("Username dan password wajib diisi");
       return;
     }
-
     try {
+      // Mengirim data user baru ke endpoint /api/users dengan method POST
       const response = await fetch("/api/users", {
         method: "POST",
         credentials: "include",
@@ -109,32 +135,34 @@ export default function Users() {
         },
         body: JSON.stringify(formData),
       });
-
+      // Jika response tidak berhasil, tampilkan error
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to add user");
+        throw new Error(errorData.message || "Gagal menambah user");
       }
-
+      // Jika berhasil, tambahkan user baru ke daftar users dan tutup modal
       const newUser = await response.json();
       setUsers([...users, newUser]);
       setShowAddModal(false);
-      toast.success("User added successfully");
+      toast.success("User berhasil ditambah");
     } catch (error) {
+      // Jika error, tampilkan di konsol dan notifikasi
       console.error("Error adding user:", error);
-      toast.error(error.message || "Failed to add user");
+      toast.error(error.message || "Gagal menambah user");
     }
   };
 
+  // Fungsi untuk mengirim data user yang diedit ke backend saat form edit user disubmit
+  // Jika berhasil, data user di daftar users akan diperbarui dan modal ditutup
   const submitEditUser = async (e) => {
-    e.preventDefault();
-
-    // Validate form
+    e.preventDefault(); // Mencegah reload halaman
+    // Validasi form, username wajib diisi
     if (!formData.username) {
-      toast.error("Username is required");
+      toast.error("Username wajib diisi");
       return;
     }
-
     try {
+      // Mengirim data user yang diedit ke endpoint /api/users/:id dengan method PUT
       const response = await fetch(`/api/users/${currentUser.id}`, {
         method: "PUT",
         credentials: "include",
@@ -143,56 +171,56 @@ export default function Users() {
         },
         body: JSON.stringify(formData),
       });
-
+      // Jika response tidak berhasil, tampilkan error
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to update user");
+        throw new Error(errorData.message || "Gagal mengubah user");
       }
-
+      // Jika berhasil, update data user di daftar users dan tutup modal
       const updatedUser = await response.json();
-
-      // Update users array with the updated user
       setUsers(
         users.map((user) => (user.id === currentUser.id ? updatedUser : user))
       );
-
       setShowEditModal(false);
-      toast.success("User updated successfully");
+      toast.success("User berhasil diupdate");
     } catch (error) {
+      // Jika error, tampilkan di konsol dan notifikasi
       console.error("Error updating user:", error);
-      toast.error(error.message || "Failed to update user");
+      toast.error(error.message || "Gagal mengubah user");
     }
   };
 
+  // Fungsi untuk menghapus user dari backend dan dari daftar users
+  // Jika user yang dihapus adalah admin terakhir, proses dibatalkan
   const submitDeleteUser = async () => {
-    // Prevent deleting the last admin
+    // Cek agar admin terakhir tidak bisa dihapus
     if (
       currentUser.role === "ADMIN" &&
       users.filter((user) => user.role === "ADMIN").length <= 1
     ) {
-      toast.error("Cannot delete the last admin user");
+      toast.error("Tidak bisa menghapus admin terakhir");
       setShowDeleteModal(false);
       return;
     }
-
     try {
+      // Mengirim permintaan hapus ke endpoint /api/users/:id dengan method DELETE
       const response = await fetch(`/api/users/${currentUser.id}`, {
         method: "DELETE",
         credentials: "include",
       });
-
+      // Jika response tidak berhasil, tampilkan error
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to delete user");
+        throw new Error(errorData.message || "Gagal menghapus user");
       }
-
-      // Remove user from the users array
+      // Jika berhasil, hapus user dari daftar users dan tutup modal
       setUsers(users.filter((user) => user.id !== currentUser.id));
       setShowDeleteModal(false);
-      toast.success("User deleted successfully");
+      toast.success("User berhasil dihapus");
     } catch (error) {
+      // Jika error, tampilkan di konsol dan notifikasi
       console.error("Error deleting user:", error);
-      toast.error(error.message || "Failed to delete user");
+      toast.error(error.message || "Gagal menghapus user");
     }
   };
 
@@ -228,7 +256,7 @@ export default function Users() {
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">Loading users...</p>
+              <p className="mt-2 text-muted-foreground">Memuat data user...</p>
             </div>
           </div>
         ) : (
@@ -297,7 +325,7 @@ export default function Users() {
                         colSpan="4"
                         className="px-4 py-8 text-center text-muted-foreground"
                       >
-                        No users found
+                        Tidak ada user ditemukan
                       </td>
                     </tr>
                   )}
@@ -308,12 +336,11 @@ export default function Users() {
         )}
       </div>
 
-      {/* Add User Modal */}
       {showAddModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">Add New User</h2>
+              <h2 className="text-xl font-bold mb-4">Tambah User Baru</h2>
               <form onSubmit={submitAddUser}>
                 <div className="space-y-4">
                   <div>
@@ -379,13 +406,13 @@ export default function Users() {
                     onClick={() => setShowAddModal(false)}
                     className="px-4 py-2 border border-input rounded-md hover:bg-muted transition-colors"
                   >
-                    Cancel
+                    Batal
                   </button>
                   <button
                     type="submit"
                     className="px-4 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90 transition-colors"
                   >
-                    Add User
+                    Tambah User
                   </button>
                 </div>
               </form>
@@ -394,7 +421,6 @@ export default function Users() {
         </div>
       )}
 
-      {/* Edit User Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md">
@@ -425,7 +451,7 @@ export default function Users() {
                       htmlFor="edit-password"
                       className="block text-sm font-medium mb-1"
                     >
-                      Password (leave blank to keep current)
+                      Password (kosongkan jika tidak ingin mengubah)
                     </label>
                     <input
                       type="password"
@@ -470,7 +496,7 @@ export default function Users() {
                     onClick={() => setShowEditModal(false)}
                     className="px-4 py-2 border border-input rounded-md hover:bg-muted transition-colors"
                   >
-                    Cancel
+                    Batal
                   </button>
                   <button
                     type="submit"
@@ -485,16 +511,15 @@ export default function Users() {
         </div>
       )}
 
-      {/* Delete User Modal */}
       {showDeleteModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md">
             <div className="p-6">
-              <h2 className="text-xl font-bold mb-4">Delete User</h2>
+              <h2 className="text-xl font-bold mb-4">Hapus User</h2>
               <p className="mb-6">
-                Are you sure you want to delete{" "}
-                <strong>{currentUser.username}</strong>? This action cannot be
-                undone.
+                Apakah Anda yakin ingin menghapus{" "}
+                <strong>{currentUser.username}</strong>? Tindakan ini tidak
+                dapat dibatalkan.
               </p>
 
               <div className="flex justify-end gap-3">
@@ -502,13 +527,13 @@ export default function Users() {
                   onClick={() => setShowDeleteModal(false)}
                   className="px-4 py-2 border border-input rounded-md hover:bg-muted transition-colors"
                 >
-                  Cancel
+                  Batal
                 </button>
                 <button
                   onClick={submitDeleteUser}
                   className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
                 >
-                  Delete
+                  Hapus
                 </button>
               </div>
             </div>

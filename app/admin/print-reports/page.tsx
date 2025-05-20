@@ -46,82 +46,97 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-// Pastikan import jsPDF dan jspdf-autotable dengan benar
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
 export default function PrintReports() {
+  // Membuat state untuk menyimpan rentang tanggal yang dipilih user
   const [dateRange, setDateRange] = useState({
-    start: format(subDays(new Date(), 30), "yyyy-MM-dd"),
-    end: format(new Date(), "yyyy-MM-dd"),
+    start: format(subDays(new Date(), 30), "yyyy-MM-dd"), // Tanggal mulai default: 30 hari lalu
+    end: format(new Date(), "yyyy-MM-dd"), // Tanggal akhir default: hari ini
   });
-  const [reportType, setReportType] = useState("sales");
-  const [reportData, setReportData] = useState(null);
+  // Membuat state untuk menyimpan tipe laporan yang dipilih user
+  const [reportType, setReportType] = useState("sales"); // Default: laporan penjualan
+  // Membuat state untuk menyimpan data laporan yang diambil dari server
+  const [reportData, setReportData] = useState<any>(null);
+  // Membuat state untuk menandai apakah sedang loading
   const [isLoading, setIsLoading] = useState(false);
-  const [comparisonData, setComparisonData] = useState(null);
+  // Membuat state untuk menyimpan data perbandingan (periode sebelumnya)
+  const [comparisonData, setComparisonData] = useState<any>(null);
+  // Membuat state untuk menandai apakah perbandingan aktif
   const [showComparison, setShowComparison] = useState(false);
-  const [error, setError] = useState(null);
+  // Membuat state untuk menyimpan pesan error
+  const [error, setError] = useState<string | null>(null);
+  // State berikut tidak digunakan, hanya dummy
   const [userRole, setUserRole] = useState(null);
   const [isAuthorized, setIsAuthorized] = useState(true);
   const [isCheckingAuth, setIsCheckingAuth] = useState(false);
+  // Membuat ref untuk elemen yang akan diprint (tidak digunakan di kode ini)
   const printRef = useRef(null);
+  // Membuat router untuk navigasi programatik
   const router = useRouter();
 
+  // useEffect akan dijalankan setiap kali dateRange, reportType, atau showComparison berubah
   useEffect(() => {
-    // Langsung ambil data tanpa pemeriksaan peran
-    fetchReportData();
+    fetchReportData(); // Ambil data laporan utama dari server
     if (showComparison) {
-      fetchComparisonData();
+      // Jika perbandingan aktif
+      fetchComparisonData(); // Ambil data perbandingan dari server
     }
-  }, [dateRange, reportType, showComparison]);
+  }, [dateRange, reportType, showComparison]); // Dependency array: jalankan ulang jika salah satu berubah
 
-  useEffect(() => {
-    fetchReportData();
-    if (showComparison) {
-      fetchComparisonData();
-    }
-  }, [dateRange, reportType, showComparison]);
-
+  // Fungsi untuk mengambil data laporan dari server
   const fetchReportData = async () => {
     try {
-      setIsLoading(true);
-      setError(null);
+      setIsLoading(true); // Set loading menjadi true agar muncul animasi loading
+      setError(null); // Reset pesan error menjadi null
 
+      // Membuat query parameter dari tanggal yang dipilih user
       const queryParams = new URLSearchParams({
-        startDate: dateRange.start,
-        endDate: dateRange.end,
+        startDate: dateRange.start, // Tanggal mulai diambil dari state dateRange
+        endDate: dateRange.end, // Tanggal akhir diambil dari state dateRange
       });
 
+      // Mengambil data laporan dari endpoint API dengan query parameter
       const response = await fetch(`/api/reports/sales?${queryParams}`);
 
+      // Jika response dari server tidak sukses (bukan 200 OK)
       if (!response.ok) {
+        // Lempar error dengan pesan status dari server
         throw new Error(
-          `Failed to fetch report data: ${response.status} ${response.statusText}`
+          `Gagal mengambil data laporan: ${response.status} ${response.statusText}`
         );
       }
 
+      // Mengubah response dari server menjadi data JSON
       const data = await response.json();
 
-      // Add additional metrics for managers
+      // Jika data penjualan ada dan jumlahnya lebih dari 0
       if (data.salesData && data.salesData.length > 0) {
-        // Calculate growth rates
+        // Hitung jumlah hari dalam periode yang dipilih user
         const totalDays =
           differenceInDays(new Date(dateRange.end), new Date(dateRange.start)) +
           1;
+        // Hitung titik tengah periode (untuk membagi dua periode)
         const midPoint = Math.floor(totalDays / 2);
 
+        // Ambil data penjualan setengah periode pertama
         const firstHalfData = data.salesData.slice(0, midPoint);
+        // Ambil data penjualan setengah periode kedua
         const secondHalfData = data.salesData.slice(midPoint);
 
+        // Hitung total penjualan pada setengah periode pertama
         const firstHalfSales = firstHalfData.reduce(
-          (sum, item) => sum + item.sales,
+          (sum: number, item: any) => sum + item.sales,
           0
         );
+        // Hitung total penjualan pada setengah periode kedua
         const secondHalfSales = secondHalfData.reduce(
-          (sum, item) => sum + item.sales,
+          (sum: number, item: any) => sum + item.sales,
           0
         );
 
+        // Hitung persentase pertumbuhan penjualan antar setengah periode
         const growthRate =
           firstHalfSales > 0
             ? (
@@ -130,49 +145,57 @@ export default function PrintReports() {
               ).toFixed(2)
             : 0;
 
-        // Add daily average
+        // Hitung rata-rata penjualan harian selama periode
         const dailyAverage = data.summary.totalSales / totalDays;
 
-        // Add to summary
-        data.summary.growthRate = Number.parseFloat(growthRate);
+        // Simpan nilai pertumbuhan ke dalam data summary
+        data.summary.growthRate = Number.parseFloat(growthRate as string);
+        // Simpan rata-rata harian ke dalam data summary
         data.summary.dailyAverage = dailyAverage;
+        // Simpan jumlah hari ke dalam data summary
         data.summary.periodLength = totalDays;
       }
 
-      setReportData(data);
-    } catch (error) {
-      console.error("Error fetching report data:", error);
-      setError(error.message);
+      setReportData(data); // Simpan data laporan ke state reportData
+    } catch (error: any) {
+      console.error("Error fetching report data:", error); // Tampilkan error di konsol
+      setError(error.message); // Simpan pesan error ke state error
     } finally {
-      setIsLoading(false);
+      setIsLoading(false); // Set status loading menjadi false agar loading hilang
     }
   };
 
+  // Fungsi untuk mengambil data perbandingan (periode sebelumnya)
   const fetchComparisonData = async () => {
     try {
-      // Calculate previous period with same length
-      const currentStartDate = new Date(dateRange.start);
-      const currentEndDate = new Date(dateRange.end);
+      // Hitung periode sebelumnya dengan panjang yang sama
+      const currentStartDate = new Date(dateRange.start); // Tanggal mulai periode sekarang
+      const currentEndDate = new Date(dateRange.end); // Tanggal akhir periode sekarang
       const periodLength =
-        differenceInDays(currentEndDate, currentStartDate) + 1;
+        differenceInDays(currentEndDate, currentStartDate) + 1; // Panjang periode
 
-      const previousEndDate = subDays(currentStartDate, 1);
-      const previousStartDate = subDays(previousEndDate, periodLength - 1);
+      // Tentukan tanggal mulai dan akhir periode sebelumnya
+      const previousEndDate = subDays(currentStartDate, 1); // Satu hari sebelum periode sekarang
+      const previousStartDate = subDays(previousEndDate, periodLength - 1); // Mundur sesuai panjang periode
 
+      // Buat query parameter untuk periode sebelumnya
       const queryParams = new URLSearchParams({
-        startDate: format(previousStartDate, "yyyy-MM-dd"),
-        endDate: format(previousEndDate, "yyyy-MM-dd"),
+        startDate: format(previousStartDate, "yyyy-MM-dd"), // Format tanggal mulai
+        endDate: format(previousEndDate, "yyyy-MM-dd"), // Format tanggal akhir
       });
 
+      // Ambil data perbandingan dari API
       const response = await fetch(`/api/reports/sales?${queryParams}`);
 
+      // Jika response tidak sukses, lempar error
       if (!response.ok) {
-        throw new Error("Failed to fetch comparison data");
+        throw new Error("Gagal mengambil data perbandingan");
       }
 
+      // Ubah response ke JSON
       const data = await response.json();
 
-      // Add additional metrics for comparison
+      // Hitung rata-rata harian dan simpan ke summary jika ada data
       if (data.salesData && data.salesData.length > 0) {
         const totalDays =
           differenceInDays(previousEndDate, previousStartDate) + 1;
@@ -181,69 +204,75 @@ export default function PrintReports() {
         data.summary.dailyAverage = dailyAverage;
       }
 
-      setComparisonData(data);
+      setComparisonData(data); // Simpan data perbandingan ke state
     } catch (error) {
-      console.error("Error fetching comparison data:", error);
+      console.error("Error fetching comparison data:", error); // Tampilkan error di konsol
     }
   };
 
-  const handleStartDateChange = (e) => {
+  // Fungsi untuk mengubah tanggal mulai
+  const handleStartDateChange = (e: any) => {
     setDateRange({
-      ...dateRange,
-      start: e.target.value,
+      ...dateRange, // Salin data dateRange sebelumnya
+      start: e.target.value, // Ubah tanggal mulai sesuai input user
     });
   };
 
-  const handleEndDateChange = (e) => {
+  // Fungsi untuk mengubah tanggal akhir
+  const handleEndDateChange = (e: any) => {
     setDateRange({
-      ...dateRange,
-      end: e.target.value,
+      ...dateRange, // Salin data dateRange sebelumnya
+      end: e.target.value, // Ubah tanggal akhir sesuai input user
     });
   };
 
-  const handleReportTypeChange = (type) => {
-    setReportType(type);
+  // Fungsi untuk mengubah tipe laporan (penjualan, produk, kategori)
+  const handleReportTypeChange = (type: any) => {
+    setReportType(type); // Ubah tipe laporan sesuai pilihan user
   };
 
-  const handleQuickDateRange = (range) => {
-    const today = new Date();
+  // Fungsi untuk memilih rentang tanggal cepat (hari ini, kemarin, minggu, bulan, dst)
+  const handleQuickDateRange = (range: any) => {
+    const today = new Date(); // Ambil tanggal hari ini
 
-    switch (range) {
+    switch (
+      range // Pilih aksi sesuai range yang dipilih user
+    ) {
       case "today":
         setDateRange({
-          start: format(today, "yyyy-MM-dd"),
-          end: format(today, "yyyy-MM-dd"),
+          start: format(today, "yyyy-MM-dd"), // Set tanggal mulai hari ini
+          end: format(today, "yyyy-MM-dd"), // Set tanggal akhir hari ini
         });
         break;
       case "yesterday":
-        const yesterday = subDays(today, 1);
+        const yesterday = subDays(today, 1); // Ambil tanggal kemarin
         setDateRange({
-          start: format(yesterday, "yyyy-MM-dd"),
-          end: format(yesterday, "yyyy-MM-dd"),
+          start: format(yesterday, "yyyy-MM-dd"), // Set tanggal mulai kemarin
+          end: format(yesterday, "yyyy-MM-dd"), // Set tanggal akhir kemarin
         });
         break;
       case "week":
         setDateRange({
-          start: format(subDays(today, 7), "yyyy-MM-dd"),
-          end: format(today, "yyyy-MM-dd"),
+          start: format(subDays(today, 7), "yyyy-MM-dd"), // 7 hari lalu
+          end: format(today, "yyyy-MM-dd"), // hari ini
         });
         break;
       case "month":
         setDateRange({
-          start: format(startOfMonth(today), "yyyy-MM-dd"),
-          end: format(endOfMonth(today), "yyyy-MM-dd"),
+          start: format(startOfMonth(today), "yyyy-MM-dd"), // Awal bulan ini
+          end: format(endOfMonth(today), "yyyy-MM-dd"), // Akhir bulan ini
         });
         break;
       case "30days":
         setDateRange({
-          start: format(subDays(today, 30), "yyyy-MM-dd"),
-          end: format(today, "yyyy-MM-dd"),
+          start: format(subDays(today, 30), "yyyy-MM-dd"), // 30 hari lalu
+          end: format(today, "yyyy-MM-dd"), // hari ini
         });
         break;
       case "90days":
         setDateRange({
-          start: format(subDays(today, 90), "yyyy-MM-dd"),
-          end: format(today, "yyyy-MM-dd"),
+          start: format(subDays(today, 90), "yyyy-MM-dd"), // 90 hari lalu
+          end: format(today, "yyyy-MM-dd"), // hari ini
         });
         break;
       default:
@@ -251,28 +280,23 @@ export default function PrintReports() {
     }
   };
 
-  const handlePrint = () => {
-    window.print();
-  };
-
+  // Fungsi untuk mengekspor laporan ke PDF
   const exportToPDF = () => {
     try {
-      // Inisialisasi jsPDF
-      const doc = new jsPDF();
+      const doc = new jsPDF(); // Inisialisasi dokumen PDF baru
 
-      // Tambahkan header
-      doc.setFontSize(18);
-      doc.text("Sajiwa Steak Restaurant", 105, 15, { align: "center" });
+      doc.setFontSize(18); // Set ukuran font judul
+      doc.text("Sajiwa Steak Restaurant", 105, 15, { align: "center" }); // Tulis nama restoran di tengah
 
-      doc.setFontSize(14);
-      let reportTitle = "";
-      if (reportType === "sales") reportTitle = "Laporan Penjualan Manajerial";
-      if (reportType === "products") reportTitle = "Laporan Produk Manajerial";
+      doc.setFontSize(14); // Set ukuran font subjudul
+      let reportTitle = ""; // Variabel untuk judul laporan
+      if (reportType === "sales") reportTitle = "Laporan Penjualan Manajerial"; // Judul jika tipe sales
+      if (reportType === "products") reportTitle = "Laporan Produk Manajerial"; // Judul jika tipe produk
       if (reportType === "categories")
-        reportTitle = "Laporan Kategori Manajerial";
-      doc.text(reportTitle, 105, 25, { align: "center" });
+        reportTitle = "Laporan Kategori Manajerial"; // Judul jika tipe kategori
+      doc.text(reportTitle, 105, 25, { align: "center" }); // Tulis judul di tengah
 
-      doc.setFontSize(10);
+      doc.setFontSize(10); // Set ukuran font kecil
       doc.text(
         `Periode: ${format(new Date(dateRange.start), "d MMMM yyyy", {
           locale: id,
@@ -282,7 +306,7 @@ export default function PrintReports() {
         105,
         35,
         { align: "center" }
-      );
+      ); // Tulis periode laporan
 
       doc.text(
         `Dibuat pada: ${format(new Date(), "d MMMM yyyy HH:mm", {
@@ -290,18 +314,15 @@ export default function PrintReports() {
         })}`,
         105,
         42,
-        {
-          align: "center",
-        }
-      );
+        { align: "center" }
+      ); // Tulis tanggal pembuatan laporan
 
-      // Tambahkan ringkasan
-      doc.setFontSize(12);
-      doc.text("Ringkasan", 14, 55);
+      doc.setFontSize(12); // Set ukuran font untuk ringkasan
+      doc.text("Ringkasan", 14, 55); // Tulis judul ringkasan
 
       if (reportType === "sales") {
-        // Format currency
-        const formatCurrency = (value) => {
+        // Jika tipe laporan sales
+        const formatCurrency = (value: any) => {
           return new Intl.NumberFormat("id-ID", {
             style: "currency",
             currency: "IDR",
@@ -309,7 +330,6 @@ export default function PrintReports() {
           }).format(value);
         };
 
-        // Tabel ringkasan
         const summaryData = [
           ["Total Penjualan", formatCurrency(reportData.summary.totalSales)],
           ["Total Pesanan", reportData.summary.totalOrders.toString()],
@@ -330,23 +350,21 @@ export default function PrintReports() {
           ],
         ];
 
-        // Gunakan autoTable dari jspdf-autotable
         autoTable(doc, {
           startY: 60,
           head: [["Metrik", "Nilai"]],
           body: summaryData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
-        });
+        }); // Buat tabel ringkasan
       }
 
-      // Tambahkan data detail
-      const startY = reportType === "sales" ? 130 : 60;
-      doc.setFontSize(12);
-      doc.text("Data Detail", 14, startY - 5);
+      const startY = reportType === "sales" ? 130 : 60; // Posisi awal tabel detail
+      doc.setFontSize(12); // Set ukuran font untuk data detail
+      doc.text("Data Detail", 14, startY - 5); // Tulis judul data detail
 
       if (reportType === "sales") {
-        const tableData = reportData.salesData.map((item) => [
+        const tableData = reportData.salesData.map((item: any) => [
           item.date,
           new Intl.NumberFormat("id-ID", {
             style: "currency",
@@ -367,11 +385,11 @@ export default function PrintReports() {
           body: tableData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
-        });
+        }); // Buat tabel data detail penjualan
       } else if (reportType === "products") {
-        const tableData = reportData.topProducts.map((item) => {
+        const tableData = reportData.topProducts.map((item: any) => {
           const totalQuantity = reportData.topProducts.reduce(
-            (sum, i) => sum + i.quantity,
+            (sum: number, i: any) => sum + i.quantity,
             0
           );
           const percentage = ((item.quantity / totalQuantity) * 100).toFixed(1);
@@ -394,11 +412,11 @@ export default function PrintReports() {
           body: tableData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
-        });
+        }); // Buat tabel data detail produk
       } else if (reportType === "categories") {
-        const tableData = reportData.categoryData.map((item) => {
+        const tableData = reportData.categoryData.map((item: any) => {
           const totalQuantity = reportData.categoryData.reduce(
-            (sum, i) => sum + i.quantity,
+            (sum: number, i: any) => sum + i.quantity,
             0
           );
           const percentage = ((item.quantity / totalQuantity) * 100).toFixed(1);
@@ -421,49 +439,44 @@ export default function PrintReports() {
           body: tableData,
           theme: "grid",
           headStyles: { fillColor: [66, 66, 66] },
-        });
+        }); // Buat tabel data detail kategori
       }
 
-      // Tambahkan footer
-      const pageCount = doc.internal.getNumberOfPages();
+      // Tambahkan footer pada setiap halaman PDF
+      const pageCount = (doc as any).internal.getNumberOfPages(); // Ambil jumlah halaman
       for (let i = 1; i <= pageCount; i++) {
-        doc.setPage(i);
-        doc.setFontSize(10);
+        doc.setPage(i); // Pindah ke halaman ke-i
+        doc.setFontSize(10); // Set ukuran font kecil
         doc.text(
           `Sajiwa Steak Restaurant - ${format(new Date(), "yyyy")}`,
           105,
-          doc.internal.pageSize.height - 20,
-          {
-            align: "center",
-          }
-        );
+          (doc as any).internal.pageSize.height - 20,
+          { align: "center" }
+        ); // Nama restoran di footer
         doc.text(
           "Laporan ini dibuat secara otomatis oleh sistem",
           105,
-          doc.internal.pageSize.height - 15,
-          {
-            align: "center",
-          }
-        );
+          (doc as any).internal.pageSize.height - 15,
+          { align: "center" }
+        ); // Info sistem di footer
         doc.text(
           `Halaman ${i} dari ${pageCount}`,
-          doc.internal.pageSize.width - 20,
-          doc.internal.pageSize.height - 10
-        );
+          (doc as any).internal.pageSize.width - 20,
+          (doc as any).internal.pageSize.height - 10
+        ); // Nomor halaman
       }
 
-      // Simpan PDF
       doc.save(
         `laporan_manajerial_${reportType}_${dateRange.start}_${dateRange.end}.pdf`
-      );
+      ); // Simpan file PDF
     } catch (error) {
-      console.error("Error exporting to PDF:", error);
-      alert("Terjadi kesalahan saat mengekspor PDF. Silakan coba lagi.");
+      console.error("Error exporting to PDF:", error); // Tampilkan error di konsol
+      alert("Terjadi kesalahan saat mengekspor PDF. Silakan coba lagi."); // Tampilkan pesan error ke user
     }
   };
 
-  // Format currency
-  const formatCurrency = (value) => {
+  // Fungsi untuk memformat angka ke format mata uang Rupiah
+  const formatCurrency = (value: any) => {
     return new Intl.NumberFormat("id-ID", {
       style: "currency",
       currency: "IDR",
@@ -471,17 +484,17 @@ export default function PrintReports() {
     }).format(value);
   };
 
-  // Calculate percentage change
-  const calculateChange = (current, previous) => {
-    if (!previous || previous === 0) return { value: 0, isPositive: true };
-    const change = ((current - previous) / previous) * 100;
+  // Fungsi untuk menghitung persentase perubahan antara dua nilai
+  const calculateChange = (current: any, previous: any) => {
+    if (!previous || previous === 0) return { value: 0, isPositive: true }; // Jika data sebelumnya 0, return 0
+    const change = ((current - previous) / previous) * 100; // Hitung persentase perubahan
     return {
-      value: Math.abs(change).toFixed(1),
-      isPositive: change >= 0,
+      value: Math.abs(change).toFixed(1), // Nilai absolut perubahan
+      isPositive: change >= 0, // True jika perubahan positif
     };
   };
 
-  // Colors for charts
+  // Warna-warna untuk grafik
   const COLORS = [
     "#FF6384",
     "#36A2EB",
@@ -498,11 +511,6 @@ export default function PrintReports() {
       <div className="space-y-6 print:space-y-4">
         <div className="flex items-center justify-between print:hidden">
           <div className="flex items-center gap-2">
-            <Link href="/admin/reports">
-              <Button variant="outline" size="icon">
-                <ArrowLeft className="h-4 w-4" />
-              </Button>
-            </Link>
             <h1 className="text-3xl font-bold">Laporan Manajerial</h1>
           </div>
           <div className="flex gap-2">
@@ -515,14 +523,9 @@ export default function PrintReports() {
                 Export PDF
               </Button>
             )}
-            <Button onClick={handlePrint} variant="outline">
-              <Printer className="h-4 w-4 mr-2" />
-              Print
-            </Button>
           </div>
         </div>
 
-        {/* Print Header - Only visible when printing */}
         <div className="hidden print:block print:mb-6">
           <div className="text-center">
             <h1 className="text-3xl font-bold">Sajiwa Steak Restaurant</h1>
@@ -544,7 +547,6 @@ export default function PrintReports() {
           </div>
         </div>
 
-        {/* Error Alert */}
         {error && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
@@ -553,7 +555,6 @@ export default function PrintReports() {
           </Alert>
         )}
 
-        {/* Filters */}
         <Card className="print:hidden border-green-200 shadow-md">
           <CardContent className="pt-6">
             <div className="flex flex-col md:flex-row gap-4">
@@ -698,7 +699,6 @@ export default function PrintReports() {
             </div>
           ) : reportData ? (
             <>
-              {/* Summary Cards */}
               {reportType === "sales" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:grid-cols-3">
                   <Card className="border-green-200 shadow-md">
@@ -840,7 +840,6 @@ export default function PrintReports() {
                 </div>
               )}
 
-              {/* Additional Manager Metrics */}
               {reportType === "sales" && (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 print:grid-cols-3 mt-4">
                   <Card className="border-green-200 shadow-md">
@@ -968,7 +967,6 @@ export default function PrintReports() {
                 </div>
               )}
 
-              {/* Charts */}
               <Tabs defaultValue="trend" className="mt-6 print:mt-4">
                 <TabsList className="print:hidden">
                   <TabsTrigger value="trend">Tren</TabsTrigger>
@@ -1076,12 +1074,14 @@ export default function PrintReports() {
                                 fill="#22c55e"
                                 name="Jumlah Terjual"
                               >
-                                {reportData.topProducts.map((entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
-                                  />
-                                ))}
+                                {reportData.topProducts.map(
+                                  (entry: any, index: any) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={COLORS[index % COLORS.length]}
+                                    />
+                                  )
+                                )}
                               </Bar>
                             </BarChart>
                           </ResponsiveContainer>
@@ -1104,12 +1104,14 @@ export default function PrintReports() {
                                   `${name} ${(percent * 100).toFixed(0)}%`
                                 }
                               >
-                                {reportData.categoryData.map((entry, index) => (
-                                  <Cell
-                                    key={`cell-${index}`}
-                                    fill={COLORS[index % COLORS.length]}
-                                  />
-                                ))}
+                                {reportData.categoryData.map(
+                                  (entry: any, index: any) => (
+                                    <Cell
+                                      key={`cell-${index}`}
+                                      fill={COLORS[index % COLORS.length]}
+                                    />
+                                  )
+                                )}
                               </Pie>
                               <Tooltip
                                 formatter={(value) => [
@@ -1300,9 +1302,8 @@ export default function PrintReports() {
                         <ResponsiveContainer width="100%" height="100%">
                           <AreaChart
                             data={(() => {
-                              // Calculate cumulative data
                               let cumulativeTotal = 0;
-                              return reportData.salesData.map((item) => {
+                              return reportData.salesData.map((item: any) => {
                                 cumulativeTotal += item.sales;
                                 return {
                                   ...item,
@@ -1341,10 +1342,9 @@ export default function PrintReports() {
                             {showComparison &&
                               comparisonData &&
                               (() => {
-                                // Calculate cumulative comparison data
                                 let cumulativeTotal = 0;
                                 const cumulativeComparisonData =
-                                  comparisonData.salesData.map((item) => {
+                                  comparisonData.salesData.map((item: any) => {
                                     cumulativeTotal += item.sales;
                                     return {
                                       ...item,
@@ -1373,7 +1373,6 @@ export default function PrintReports() {
                 </TabsContent>
               </Tabs>
 
-              {/* Detailed Data Table */}
               <Card className="print:mt-4 border-green-200 shadow-md">
                 <CardHeader className="pb-2 bg-green-50">
                   <CardTitle>Data Detail</CardTitle>
@@ -1409,8 +1408,7 @@ export default function PrintReports() {
                           </tr>
                         </thead>
                         <tbody>
-                          {reportData.salesData.map((item, index) => {
-                            // Find matching date in comparison data if available
+                          {reportData.salesData.map((item: any, index: any) => {
                             let comparisonItem = null;
                             if (showComparison && comparisonData) {
                               const comparisonIndex =
@@ -1504,39 +1502,42 @@ export default function PrintReports() {
                           </tr>
                         </thead>
                         <tbody>
-                          {reportData.topProducts.map((item, index) => {
-                            const totalQuantity = reportData.topProducts.reduce(
-                              (sum, i) => sum + i.quantity,
-                              0
-                            );
-                            const percentage = (
-                              (item.quantity / totalQuantity) *
-                              100
-                            ).toFixed(1);
-                            const avgPrice =
-                              item.quantity > 0
-                                ? item.revenue / item.quantity
-                                : 0;
+                          {reportData.topProducts.map(
+                            (item: any, index: any) => {
+                              const totalQuantity =
+                                reportData.topProducts.reduce(
+                                  (sum: number, i: any) => sum + i.quantity,
+                                  0
+                                );
+                              const percentage = (
+                                (item.quantity / totalQuantity) *
+                                100
+                              ).toFixed(1);
+                              const avgPrice =
+                                item.quantity > 0
+                                  ? item.revenue / item.quantity
+                                  : 0;
 
-                            return (
-                              <tr
-                                key={index}
-                                className="border-t border-green-100 hover:bg-green-50"
-                              >
-                                <td className="px-4 py-3 font-medium">
-                                  {item.name}
-                                </td>
-                                <td className="px-4 py-3">{item.quantity}</td>
-                                <td className="px-4 py-3">
-                                  {formatCurrency(item.revenue)}
-                                </td>
-                                <td className="px-4 py-3">{percentage}%</td>
-                                <td className="px-4 py-3">
-                                  {formatCurrency(avgPrice)}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                              return (
+                                <tr
+                                  key={index}
+                                  className="border-t border-green-100 hover:bg-green-50"
+                                >
+                                  <td className="px-4 py-3 font-medium">
+                                    {item.name}
+                                  </td>
+                                  <td className="px-4 py-3">{item.quantity}</td>
+                                  <td className="px-4 py-3">
+                                    {formatCurrency(item.revenue)}
+                                  </td>
+                                  <td className="px-4 py-3">{percentage}%</td>
+                                  <td className="px-4 py-3">
+                                    {formatCurrency(avgPrice)}
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          )}
                         </tbody>
                       </table>
                     )}
@@ -1563,54 +1564,48 @@ export default function PrintReports() {
                           </tr>
                         </thead>
                         <tbody>
-                          {reportData.categoryData.map((item, index) => {
-                            const totalQuantity =
-                              reportData.categoryData.reduce(
-                                (sum, i) => sum + i.quantity,
-                                0
-                              );
-                            const percentage = (
-                              (item.quantity / totalQuantity) *
-                              100
-                            ).toFixed(1);
-                            const avgRevenue =
-                              item.quantity > 0
-                                ? item.revenue / item.quantity
-                                : 0;
+                          {reportData.categoryData.map(
+                            (item: any, index: any) => {
+                              const totalQuantity =
+                                reportData.categoryData.reduce(
+                                  (sum: number, i: any) => sum + i.quantity,
+                                  0
+                                );
+                              const percentage = (
+                                (item.quantity / totalQuantity) *
+                                100
+                              ).toFixed(1);
+                              const avgRevenue =
+                                item.quantity > 0
+                                  ? item.revenue / item.quantity
+                                  : 0;
 
-                            return (
-                              <tr
-                                key={index}
-                                className="border-t border-green-100 hover:bg-green-50"
-                              >
-                                <td className="px-4 py-3 font-medium">
-                                  {item.name}
-                                </td>
-                                <td className="px-4 py-3">{item.quantity}</td>
-                                <td className="px-4 py-3">
-                                  {formatCurrency(item.revenue)}
-                                </td>
-                                <td className="px-4 py-3">{percentage}%</td>
-                                <td className="px-4 py-3">
-                                  {formatCurrency(avgRevenue)}
-                                </td>
-                              </tr>
-                            );
-                          })}
+                              return (
+                                <tr
+                                  key={index}
+                                  className="border-t border-green-100 hover:bg-green-50"
+                                >
+                                  <td className="px-4 py-3 font-medium">
+                                    {item.name}
+                                  </td>
+                                  <td className="px-4 py-3">{item.quantity}</td>
+                                  <td className="px-4 py-3">
+                                    {formatCurrency(item.revenue)}
+                                  </td>
+                                  <td className="px-4 py-3">{percentage}%</td>
+                                  <td className="px-4 py-3">
+                                    {formatCurrency(avgRevenue)}
+                                  </td>
+                                </tr>
+                              );
+                            }
+                          )}
                         </tbody>
                       </table>
                     )}
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Print Footer - Only visible when printing */}
-              <div className="hidden print:block print:mt-8">
-                <div className="text-center text-sm text-muted-foreground">
-                  <p>Sajiwa Steak Restaurant - {format(new Date(), "yyyy")}</p>
-                  <p>Laporan ini dibuat secara otomatis oleh sistem</p>
-                </div>
-              </div>
             </>
           ) : (
             <Card className="print:hidden border-green-200 shadow-md">

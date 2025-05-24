@@ -381,8 +381,7 @@ export default function POS() {
       setAutoPrint(false);
     }
     // eslint-disable-next-line
-  }, [autoPrint]);
-
+  }, [autoPrint, receiptData?.paymentMethod]);
   // Fungsi untuk mencetak struk
   const printReceipt = () => {
     // Ambil konten struk
@@ -562,8 +561,8 @@ export default function POS() {
               <div class="receipt-info">
                 <span>Payment Method</span>
                 <span>${
-                  receiptData.paymentMethod === "card"
-                    ? "QR BCA"
+                  receiptData.paymentMethod === "qris"
+                    ? "Qris"
                     : receiptData.paymentMethod
                 }</span>
               </div>
@@ -713,11 +712,11 @@ export default function POS() {
         </div>
 
         {/* Cart Section */}
-        <div className="lg:w-1/3 bg-card rounded-lg shadow p-4 flex flex-col">
+        <div className="lg:w-1/3 bg-card rounded-lg shadow p-4 flex flex-col lg:sticky lg:top-6 lg:h-[calc(100vh-6rem)]">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-bold flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" />
-              Cart
+              Keranjang
             </h2>
             {cart.length > 0 && (
               <button
@@ -733,8 +732,8 @@ export default function POS() {
             {cart.length === 0 ? (
               <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
                 <ShoppingCart className="h-12 w-12 mb-2 opacity-20" />
-                <p>Your cart is empty</p>
-                <p className="text-sm">Add products to get started</p>
+                <p>Keranjang Anda kosong</p>
+                <p className="text-sm">Tambahkan produk untuk memulai</p>
               </div>
             ) : (
               <div className="space-y-3">
@@ -835,15 +834,15 @@ export default function POS() {
                       Cash
                     </button>
                     <button
-                      onClick={() => handlePaymentMethodChange("card")}
+                      onClick={() => handlePaymentMethodChange("qris")}
                       className={`flex items-center justify-center gap-2 p-3 rounded-md border ${
-                        paymentMethod === "card"
+                        paymentMethod === "qris"
                           ? "border-primary bg-primary/10"
                           : "border-input hover:bg-muted"
                       }`}
                     >
                       <CreditCard className="h-5 w-5" />
-                      Card
+                      Qris
                     </button>
                   </div>
                 </div>
@@ -911,9 +910,12 @@ export default function POS() {
           <div className="bg-card rounded-lg shadow-lg w-full max-w-md max-h-[90vh] flex flex-col">
             <div className="p-4 overflow-y-auto" ref={receiptRef}>
               <div className="text-center mb-4">
-                <Receipt
-                  className="h-8 w-8 mx-auto mb-2"
-                  style={{ color: "#c5172e" }}
+                <Image
+                  src="/logo.png"
+                  alt="logo"
+                  width={100}
+                  height={100}
+                  className="mx-auto mb-2"
                 />
                 <h2 className="text-xl font-bold" style={{ color: "#c5172e" }}>
                   Receipt
@@ -982,7 +984,7 @@ export default function POS() {
                 <div className="flex justify-between mt-3">
                   <span className="font-medium">Payment Method</span>
                   <span>
-                    {receiptData.paymentMethod === "cash" ? "Cash" : "Card"}
+                    {receiptData.paymentMethod === "cash" ? "Cash" : "Qris"}
                   </span>
                 </div>
 

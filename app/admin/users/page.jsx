@@ -26,6 +26,8 @@ export default function Users() {
     password: "",
     role: "CASHIER",
   });
+  // State untuk role user login
+  const [currentUserRole, setCurrentUserRole] = useState("");
 
   // useEffect dijalankan sekali saat komponen pertama kali dimuat
   useEffect(() => {
@@ -60,6 +62,20 @@ export default function Users() {
     };
 
     fetchUsers(); // Memanggil fungsi untuk mengambil data user dari backend
+  }, []);
+
+  useEffect(() => {
+    // Ambil role user login dari backend (bisa dari /api/users/me atau dari users[0] jika hanya 1 user login)
+    const fetchCurrentUserRole = async () => {
+      try {
+        const res = await fetch("/api/users/me", { credentials: "include" });
+        if (res.ok) {
+          const me = await res.json();
+          setCurrentUserRole(me.role);
+        }
+      } catch {}
+    };
+    fetchCurrentUserRole();
   }, []);
 
   // Fungsi untuk menangani perubahan input pencarian
@@ -125,6 +141,12 @@ export default function Users() {
       toast.error("Username dan password wajib diisi");
       return;
     }
+    if (currentUserRole === "Admin" && formData.role === "Manajer") {
+      toast.error(
+        "Admin tidak boleh menambah/mengubah user dengan role Manajer"
+      );
+      return;
+    }
     try {
       // Mengirim data user baru ke endpoint /api/users dengan method POST
       const response = await fetch("/api/users", {
@@ -146,9 +168,12 @@ export default function Users() {
       setShowAddModal(false);
       toast.success("User berhasil ditambah");
     } catch (error) {
-      // Jika error, tampilkan di konsol dan notifikasi
-      console.error("Error adding user:", error);
-      toast.error(error.message || "Gagal menambah user");
+      // Jika error dari backend, tampilkan pesan dari response
+      if (error instanceof Error && error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("Terjadi kesalahan. Silakan coba lagi.");
+      }
     }
   };
 
@@ -159,6 +184,12 @@ export default function Users() {
     // Validasi form, username wajib diisi
     if (!formData.username) {
       toast.error("Username wajib diisi");
+      return;
+    }
+    if (currentUserRole === "Admin" && formData.role === "Manajer") {
+      toast.error(
+        "Admin tidak boleh menambah/mengubah user dengan role Manajer"
+      );
       return;
     }
     try {
@@ -184,9 +215,12 @@ export default function Users() {
       setShowEditModal(false);
       toast.success("User berhasil diupdate");
     } catch (error) {
-      // Jika error, tampilkan di konsol dan notifikasi
-      console.error("Error updating user:", error);
-      toast.error(error.message || "Gagal mengubah user");
+      // Jika error dari backend, tampilkan pesan dari response
+      if (error instanceof Error && error.message) {
+        toast.error(error.message);
+      } else {
+        toast.error("Terjadi kesalahan. Silakan coba lagi.");
+      }
     }
   };
 
@@ -294,27 +328,35 @@ export default function Users() {
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <button
-                              onClick={() => handleEditUser(user)}
-                              className="p-1 rounded-md hover:bg-muted transition-colors"
-                              aria-label="Edit user"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteUser(user)}
-                              className="p-1 rounded-md hover:bg-muted transition-colors text-destructive"
-                              aria-label="Delete user"
-                              disabled={user.username === "admin"}
-                            >
-                              <Trash2
-                                className={`h-4 w-4 ${
-                                  user.username === "admin"
-                                    ? "opacity-50 cursor-not-allowed"
-                                    : ""
-                                }`}
-                              />
-                            </button>
+                            {!(
+                              currentUserRole === "Admin" &&
+                              user.role === "Manajer"
+                            ) && (
+                              <>
+                                <button
+                                  onClick={() => handleEditUser(user)}
+                                  className="p-1 rounded-md hover:bg-muted transition-colors"
+                                  aria-label="Edit user"
+                                  disabled={user.username === "admin"}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteUser(user)}
+                                  className="p-1 rounded-md hover:bg-muted transition-colors text-destructive"
+                                  aria-label="Delete user"
+                                  disabled={user.username === "admin"}
+                                >
+                                  <Trash2
+                                    className={`h-4 w-4 ${
+                                      user.username === "admin"
+                                        ? "opacity-50 cursor-not-allowed"
+                                        : ""
+                                    }`}
+                                  />
+                                </button>
+                              </>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -392,10 +434,20 @@ export default function Users() {
                       value={formData.role}
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
+                      disabled={currentUser?.username === "manajer"}
                     >
-                      <option value="Manajer">Manajer</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Kasir">Kasir</option>
+                      {currentUserRole === "Admin" ? (
+                        <>
+                          <option value="Admin">Admin</option>
+                          <option value="Kasir">Kasir</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Manajer">Manajer</option>
+                          <option value="Admin">Admin</option>
+                          <option value="Kasir">Kasir</option>
+                        </>
+                      )}
                     </select>
                   </div>
                 </div>
@@ -478,9 +530,18 @@ export default function Users() {
                       className="w-full px-3 py-2 border border-input rounded-md bg-background"
                       disabled={currentUser?.username === "manajer"}
                     >
-                      <option value="Manajer">Manajer</option>
-                      <option value="Admin">Admin</option>
-                      <option value="Kasir">Kasir</option>
+                      {currentUserRole === "Admin" ? (
+                        <>
+                          <option value="Admin">Admin</option>
+                          <option value="Kasir">Kasir</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Manajer">Manajer</option>
+                          <option value="Admin">Admin</option>
+                          <option value="Kasir">Kasir</option>
+                        </>
+                      )}
                     </select>
                     {currentUser?.username === "manajer" && (
                       <p className="text-xs text-muted-foreground mt-1">

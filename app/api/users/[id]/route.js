@@ -7,6 +7,9 @@ import bcrypt from "bcryptjs";
 export async function GET(request, { params }) {
   try {
     const { id } = params;
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json({ message: "Invalid user id" }, { status: 400 });
+    }
     const session = await getSession();
 
     if (!session) {
@@ -75,6 +78,9 @@ export async function GET(request, { params }) {
 export async function PUT(request, { params }) {
   try {
     const { id } = params;
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json({ message: "Invalid user id" }, { status: 400 });
+    }
     const session = await getSession();
 
     if (!session) {
@@ -91,15 +97,38 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Cek apakah user memiliki role Admin atau Manajer
+    // Ambil data user yang akan diedit/dihapus
+    const userTarget = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!userTarget) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+    const targetRole =
+      userTarget.userRoles.length > 0
+        ? userTarget.userRoles[0].role.name
+        : "Unknown";
+
+    // Cek hak akses
     const roles = currentUser.userRoles.map((ur) => ur.role.name);
-    if (
-      !roles.includes("Admin") &&
-      !roles.includes("Manajer") &&
-      session.id !== parseInt(id)
-    ) {
+    if (roles.includes("Manajer")) {
+      // Manajer bisa edit/hapus siapa saja (kecuali admin utama dihapus)
+      // Tidak perlu pembatasan tambahan di sini
+    } else if (roles.includes("Admin")) {
+      // Admin hanya bisa edit/hapus user dengan role Admin/Kasir
+      if (targetRole === "Manajer") {
+        return NextResponse.json(
+          { message: "Admin tidak boleh mengelola user dengan role Manajer" },
+          { status: 403 }
+        );
+      }
+    } else if (session.id !== parseInt(id)) {
+      // User biasa hanya bisa edit dirinya sendiri
       return NextResponse.json(
-        { message: "Unauthorized - You can only update your own profile" },
+        {
+          message: "Unauthorized - You can only update/delete your own profile",
+        },
         { status: 401 }
       );
     }
@@ -268,6 +297,9 @@ export async function PUT(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const { id } = params;
+    if (!id || isNaN(Number(id))) {
+      return NextResponse.json({ message: "Invalid user id" }, { status: 400 });
+    }
     const session = await getSession();
 
     if (!session) {
@@ -284,43 +316,44 @@ export async function DELETE(request, { params }) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
-    // Cek apakah user memiliki role Manajer (hanya Manajer yang bisa hapus user)
+    // Ambil data user yang akan diedit/dihapus
+    const userTarget = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      include: { userRoles: { include: { role: true } } },
+    });
+    if (!userTarget) {
+      return NextResponse.json({ message: "User not found" }, { status: 404 });
+    }
+    const targetRole =
+      userTarget.userRoles.length > 0
+        ? userTarget.userRoles[0].role.name
+        : "Unknown";
+
+    // Cek hak akses
     const roles = currentUser.userRoles.map((ur) => ur.role.name);
-    if (!roles.includes("Manajer")) {
+    if (roles.includes("Manajer")) {
+      // Manajer bisa edit/hapus siapa saja (kecuali admin utama dihapus)
+      // Tidak perlu pembatasan tambahan di sini
+    } else if (roles.includes("Admin")) {
+      // Admin hanya bisa edit/hapus user dengan role Admin/Kasir
+      if (targetRole === "Manajer") {
+        return NextResponse.json(
+          { message: "Admin tidak boleh mengelola user dengan role Manajer" },
+          { status: 403 }
+        );
+      }
+    } else if (session.id !== parseInt(id)) {
+      // User biasa hanya bisa edit dirinya sendiri
       return NextResponse.json(
-        { message: "Unauthorized - Only Manager can delete users" },
+        {
+          message: "Unauthorized - You can only update/delete your own profile",
+        },
         { status: 401 }
       );
     }
 
-    // Cek apakah user yang akan dihapus ada
-    const userToDelete = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        userRoles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
-
-    if (!userToDelete) {
-      return NextResponse.json({ message: "User not found" }, { status: 404 });
-    }
-
-    // Cegah penghapusan admin utama
-    if (userToDelete.username === "admin") {
-      return NextResponse.json(
-        { message: "Cannot delete the main admin user" },
-        { status: 400 }
-      );
-    }
-
     // Cek apakah ini admin terakhir
-    const isAdmin = userToDelete.userRoles.some(
-      (ur) => ur.role.name === "Admin"
-    );
+    const isAdmin = userTarget.userRoles.some((ur) => ur.role.name === "Admin");
     if (isAdmin) {
       const adminCount = await prisma.user.count({
         where: {
@@ -344,12 +377,9 @@ export async function DELETE(request, { params }) {
 
     // Simpan data untuk audit log
     const oldFormattedUser = {
-      id: userToDelete.id,
-      username: userToDelete.username,
-      role:
-        userToDelete.userRoles.length > 0
-          ? userToDelete.userRoles[0].role.name
-          : "Unknown",
+      id: userTarget.id,
+      username: userTarget.username,
+      role: targetRole,
     };
 
     // Hapus user roles terlebih dahulu
@@ -367,7 +397,7 @@ export async function DELETE(request, { params }) {
       data: {
         userId: session.id,
         action: "DELETE",
-        description: `Deleted user: ${userToDelete.username}`,
+        description: `Deleted user: ${userTarget.username}`,
         tableName: "User",
         recordId: parseInt(id),
         oldData: JSON.stringify(oldFormattedUser),

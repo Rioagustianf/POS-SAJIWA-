@@ -119,7 +119,18 @@ export async function POST(request) {
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
     // Cari role yang akan diberikan ke user baru
-    const roleName = data.role || "CASHIER"; // Default role: CASHIER
+    const roleName = data.role || "Kasir"; // Default role: Kasir
+    // Jika admin, tidak boleh menambah user dengan role Manajer
+    if (
+      roles.includes("Admin") &&
+      !roles.includes("Manajer") &&
+      roleName === "Manajer"
+    ) {
+      return NextResponse.json(
+        { message: "Admin tidak boleh menambah user dengan role Manajer" },
+        { status: 403 }
+      );
+    }
     const role = await prisma.role.findFirst({
       where: { name: roleName },
     });

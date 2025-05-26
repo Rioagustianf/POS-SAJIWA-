@@ -16,7 +16,7 @@ export async function GET(request) {
     // Cari data user berdasarkan ID di session, sekalian ambil data role-nya
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
 
     // Jika user tidak ditemukan, kembalikan error 404
@@ -25,7 +25,7 @@ export async function GET(request) {
     }
 
     // Ambil daftar role yang dimiliki user
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const roles = user.role ? [user.role.name] : [];
     // Cek apakah user memiliki role Admin
     const isAdmin = roles.includes("Admin");
     // Cek apakah user memiliki role Manajer
@@ -92,11 +92,6 @@ export async function GET(request) {
         user: {
           select: {
             username: true,
-            userRoles: {
-              include: {
-                role: true,
-              },
-            },
           },
         },
       },
@@ -120,7 +115,6 @@ export async function GET(request) {
       user: {
         id: log.userId,
         username: log.user?.username || "Unknown",
-        role: log.user?.userRoles[0]?.role.name || "Unknown",
       },
     }));
 

@@ -12,12 +12,13 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
-  username  String   @unique
+  username  String   
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   roleId    Int
   role      Role     @relation(fields: [roleId], references: [id])
+  isActive  Boolean  @default(true)
   
   // Relasi
   transactions Transaction[] @relation("userTransactions")
@@ -26,6 +27,8 @@ model User {
   createdTransactions Transaction[] @relation("transactionCreatedBy")
   updatedTransactions Transaction[] @relation("transactionUpdatedBy")
   auditLogs     AuditLog[]
+
+  @@unique([username, isActive])
 }
 
 model Role {

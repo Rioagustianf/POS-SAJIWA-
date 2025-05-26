@@ -11,11 +11,11 @@ export async function POST(request) {
     // Ambil username dan password dari request body
     const { username, password } = await request.json();
 
-    // Cari user berdasarkan username dan ambil data roles-nya
+    // Cari user berdasarkan username dan ambil data role-nya
     const user = await prisma.user.findUnique({
       where: { username },
       include: {
-        userRoles: { include: { role: true } }, // Include relasi role
+        role: true, // relasi baru
       },
     });
 
@@ -27,8 +27,8 @@ export async function POST(request) {
       );
     }
 
-    // Ambil daftar role yang dimiliki user
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    // Ambil role yang dimiliki user
+    const roles = user.role ? [user.role.name] : [];
 
     // Siapkan data session untuk JWT
     const session = {

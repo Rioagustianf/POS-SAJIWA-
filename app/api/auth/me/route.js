@@ -17,7 +17,7 @@ export async function GET() {
     // Cari data user berdasarkan ID di session, sekalian ambil data role-nya
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
 
     // Jika user tidak ditemukan, kembalikan error 404
@@ -26,7 +26,7 @@ export async function GET() {
     }
 
     // Ambil daftar role yang dimiliki user
-    const roles = user.userRoles.map((ur) => ur.role.name);
+    const roles = user.role ? [user.role.name] : [];
 
     // Kembalikan data user dalam format yang diharapkan oleh AdminLayout
     return NextResponse.json(

@@ -10,7 +10,7 @@ export async function GET() {
     }
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
     if (!user) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
@@ -18,8 +18,8 @@ export async function GET() {
     const formattedUser = {
       id: user.id,
       username: user.username,
-      role: user.userRoles.length > 0 ? user.userRoles[0].role.name : "Unknown",
-      roles: user.userRoles.map((ur) => ur.role.name),
+      role: user.role ? user.role.name : "Unknown",
+      roles: user.role ? [user.role.name] : [],
     };
     return NextResponse.json(formattedUser);
   } catch (error) {

@@ -19,15 +19,14 @@ export async function GET(request, { params }) {
     // Ambil data user dan role-nya
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
-
     if (!currentUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
+    const roles = currentUser.role ? [currentUser.role.name] : [];
 
     // Cek apakah user memiliki role Admin atau Manajer
-    const roles = currentUser.userRoles.map((ur) => ur.role.name);
     if (
       !roles.includes("Admin") &&
       !roles.includes("Manajer") &&
@@ -41,16 +40,10 @@ export async function GET(request, { params }) {
 
     const user = await prisma.user.findUnique({
       where: { id: parseInt(id) },
-      include: {
-        userRoles: {
-          include: {
-            role: true,
-          },
-        },
-      },
+      include: { role: true },
     });
 
-    if (!user) {
+    if (!user || user.isActive === false) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
 
@@ -60,8 +53,8 @@ export async function GET(request, { params }) {
       username: user.username,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      role: user.userRoles.length > 0 ? user.userRoles[0].role.name : "Unknown",
-      roles: user.userRoles.map((ur) => ur.role.name),
+      role: user.role ? user.role.name : "Unknown",
+      roles: user.role ? [user.role.name] : [],
     };
 
     return NextResponse.json(formattedUser);
@@ -90,28 +83,24 @@ export async function PUT(request, { params }) {
     // Ambil data user dan role-nya
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
-
     if (!currentUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
+    const roles = currentUser.role ? [currentUser.role.name] : [];
 
     // Ambil data user yang akan diedit/dihapus
     const userTarget = await prisma.user.findUnique({
       where: { id: parseInt(id) },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
     if (!userTarget) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
-    const targetRole =
-      userTarget.userRoles.length > 0
-        ? userTarget.userRoles[0].role.name
-        : "Unknown";
+    const targetRole = userTarget.role ? userTarget.role.name : "Unknown";
 
     // Cek hak akses
-    const roles = currentUser.userRoles.map((ur) => ur.role.name);
     if (roles.includes("Manajer")) {
       // Manajer bisa edit/hapus siapa saja (kecuali admin utama dihapus)
       // Tidak perlu pembatasan tambahan di sini
@@ -165,24 +154,10 @@ export async function PUT(request, { params }) {
     }
 
     // Simpan data lama untuk audit log
-    const oldUser = await prisma.user.findUnique({
-      where: { id: parseInt(id) },
-      include: {
-        userRoles: {
-          include: {
-            role: true,
-          },
-        },
-      },
-    });
-
     const oldFormattedUser = {
-      id: oldUser.id,
-      username: oldUser.username,
-      role:
-        oldUser.userRoles.length > 0
-          ? oldUser.userRoles[0].role.name
-          : "Unknown",
+      id: userTarget.id,
+      username: userTarget.username,
+      role: targetRole,
     };
 
     // Persiapkan data update
@@ -199,55 +174,21 @@ export async function PUT(request, { params }) {
     const updatedUser = await prisma.user.update({
       where: { id: parseInt(id) },
       data: updateData,
-      include: {
-        userRoles: {
-          include: {
-            role: true,
-          },
-        },
-      },
     });
 
     // Update role jika diperlukan dan user bukan admin utama
-    if (data.role && userToUpdate.username !== "admin") {
-      // Cari role ID berdasarkan nama role
-      const role = await prisma.role.findFirst({
-        where: { name: data.role },
-      });
-
+    if (data.role && userTarget.username !== "admin") {
+      const role = await prisma.role.findFirst({ where: { name: data.role } });
       if (!role) {
         return NextResponse.json(
           { message: "Invalid role specified" },
           { status: 400 }
         );
       }
-
-      // Hapus role lama
-      await prisma.userRole.deleteMany({
-        where: { userId: parseInt(id) },
-      });
-
-      // Tambah role baru
-      await prisma.userRole.create({
-        data: {
-          userId: parseInt(id),
-          roleId: role.id,
-        },
-      });
-
-      // Ambil data user yang sudah diupdate dengan role baru
-      const refreshedUser = await prisma.user.findUnique({
+      await prisma.user.update({
         where: { id: parseInt(id) },
-        include: {
-          userRoles: {
-            include: {
-              role: true,
-            },
-          },
-        },
+        data: { roleId: role.id },
       });
-
-      updatedUser.userRoles = refreshedUser.userRoles;
     }
 
     // Catat ke audit log
@@ -262,10 +203,7 @@ export async function PUT(request, { params }) {
         newData: JSON.stringify({
           id: updatedUser.id,
           username: updatedUser.username,
-          role:
-            updatedUser.userRoles.length > 0
-              ? updatedUser.userRoles[0].role.name
-              : "Unknown",
+          role: updatedUser.role ? updatedUser.role.name : "Unknown",
         }),
       },
     });
@@ -276,11 +214,8 @@ export async function PUT(request, { params }) {
       username: updatedUser.username,
       createdAt: updatedUser.createdAt,
       updatedAt: updatedUser.updatedAt,
-      role:
-        updatedUser.userRoles.length > 0
-          ? updatedUser.userRoles[0].role.name
-          : "Unknown",
-      roles: updatedUser.userRoles.map((ur) => ur.role.name),
+      role: updatedUser.role ? updatedUser.role.name : "Unknown",
+      roles: updatedUser.role ? [updatedUser.role.name] : [],
     };
 
     return NextResponse.json(formattedUser);
@@ -309,28 +244,24 @@ export async function DELETE(request, { params }) {
     // Ambil data user dan role-nya
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
-
     if (!currentUser) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
+    const roles = currentUser.role ? [currentUser.role.name] : [];
 
     // Ambil data user yang akan diedit/dihapus
     const userTarget = await prisma.user.findUnique({
       where: { id: parseInt(id) },
-      include: { userRoles: { include: { role: true } } },
+      include: { role: true },
     });
     if (!userTarget) {
       return NextResponse.json({ message: "User not found" }, { status: 404 });
     }
-    const targetRole =
-      userTarget.userRoles.length > 0
-        ? userTarget.userRoles[0].role.name
-        : "Unknown";
+    const targetRole = userTarget.role ? userTarget.role.name : "Unknown";
 
     // Cek hak akses
-    const roles = currentUser.userRoles.map((ur) => ur.role.name);
     if (roles.includes("Manajer")) {
       // Manajer bisa edit/hapus siapa saja (kecuali admin utama dihapus)
       // Tidak perlu pembatasan tambahan di sini
@@ -359,14 +290,10 @@ export async function DELETE(request, { params }) {
       role: targetRole,
     };
 
-    // Hapus user roles terlebih dahulu
-    await prisma.userRole.deleteMany({
-      where: { userId: parseInt(id) },
-    });
-
-    // Hapus user
-    await prisma.user.delete({
+    // Soft delete user
+    await prisma.user.update({
       where: { id: parseInt(id) },
+      data: { isActive: false },
     });
 
     // Catat ke audit log

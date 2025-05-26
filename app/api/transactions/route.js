@@ -15,11 +15,11 @@ export async function GET(request) {
     // Ambil data user beserta rolenya
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { role: true }, // relasi baru
     });
-    const roles = user.userRoles.map((ur) => ur.role.name); // Ambil daftar role
-    const isAdmin = roles.includes("Admin"); // Cek role Admin
-    const isManager = roles.includes("Manajer"); // Cek role Manajer
+    const roles = user.role ? [user.role.name] : [];
+    const isAdmin = roles.includes("Admin");
+    const isManager = roles.includes("Manajer");
 
     // Set filter berdasarkan role
     let whereClause = {};

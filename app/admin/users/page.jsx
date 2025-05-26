@@ -89,7 +89,7 @@ export default function Users() {
   const filteredUsers = users.filter(
     (user) =>
       user.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      user.role.toLowerCase().includes(searchTerm.toLowerCase())
+      (user.role || "").toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Fungsi untuk menangani perubahan input pada form tambah/edit user

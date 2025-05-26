@@ -46,15 +46,13 @@ export async function GET(request, { params }) {
     }
 
     // Cek hak akses user untuk melihat transaksi ini
-    const userRoles =
-      (
-        await prisma.user.findUnique({
-          where: { id: session.id },
-          include: { userRoles: { include: { role: true } } }, // Include relasi role
-        })
-      )?.userRoles.map((ur) => ur.role.name) || [];
-    const isAdmin = userRoles.includes("Admin"); // Cek role Admin
-    const isManager = userRoles.includes("Manajer"); // Cek role Manajer
+    const user = await prisma.user.findUnique({
+      where: { id: session.id },
+      include: { role: true },
+    });
+    const roles = user.role ? [user.role.name] : [];
+    const isAdmin = roles.includes("Admin");
+    const isManager = roles.includes("Manajer");
 
     // Validasi akses: hanya Admin, Manajer, atau pemilik transaksi yang boleh melihat
     if (!isAdmin && !isManager && transaction.userId !== session.id) {
@@ -78,14 +76,12 @@ export async function DELETE(request, { params }) {
     const session = await getSession();
 
     // Cek role user
-    const userRoles =
-      (
-        await prisma.user.findUnique({
-          where: { id: session?.id },
-          include: { userRoles: { include: { role: true } } }, // Include relasi role
-        })
-      )?.userRoles.map((ur) => ur.role.name) || [];
-    const isAdmin = userRoles.includes("Admin"); // Cek role Admin
+    const user = await prisma.user.findUnique({
+      where: { id: session?.id },
+      include: { role: true },
+    });
+    const roles = user?.role ? [user.role.name] : [];
+    const isAdmin = roles.includes("Admin");
 
     // Validasi akses: hanya Admin yang boleh menghapus
     if (!session || !isAdmin) {

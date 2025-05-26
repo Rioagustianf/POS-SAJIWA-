@@ -16,10 +16,9 @@ export async function GET(request) {
     // Cek role user dengan mengambil data user dan relasinya
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { role: true },
     });
-    const roles = user.userRoles.map((ur) => ur.role.name); // Ambil daftar role
-
+    const roles = user.role ? [user.role.name] : [];
     // Validasi role: hanya Admin/Manajer yang boleh mengakses
     if (!roles.includes("Admin") && !roles.includes("Manajer")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });

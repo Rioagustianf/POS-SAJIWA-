@@ -16,7 +16,7 @@ export async function GET(request) {
     // Ambil data user beserta rolenya
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { role: true },
     });
 
     if (!currentUser) {
@@ -24,7 +24,7 @@ export async function GET(request) {
     }
 
     // Validasi role: hanya Admin/Manajer yang boleh melihat daftar user
-    const roles = currentUser.userRoles.map((ur) => ur.role.name); // Ambil daftar role
+    const roles = currentUser.role ? [currentUser.role.name] : [];
     if (!roles.includes("Admin") && !roles.includes("Manajer")) {
       return NextResponse.json(
         { message: "Unauthorized - Only Admin or Manager can view users" },
@@ -34,16 +34,9 @@ export async function GET(request) {
 
     // Ambil semua user dengan role mereka dari database
     const users = await prisma.user.findMany({
-      include: {
-        userRoles: {
-          include: {
-            role: true, // Include data role
-          },
-        },
-      },
-      orderBy: {
-        username: "asc", // Urutkan berdasarkan username
-      },
+      where: { isActive: true },
+      include: { role: true },
+      orderBy: { username: "asc" },
     });
 
     // Format data user untuk response
@@ -52,8 +45,8 @@ export async function GET(request) {
       username: user.username,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
-      role: user.userRoles.length > 0 ? user.userRoles[0].role.name : "Unknown", // Role utama
-      roles: user.userRoles.map((ur) => ur.role.name), // Semua role
+      role: user.role ? user.role.name : "Unknown",
+      roles: user.role ? [user.role.name] : [],
     }));
 
     return NextResponse.json(formattedUsers); // Kembalikan data user
@@ -78,7 +71,7 @@ export async function POST(request) {
     // Ambil data user beserta rolenya
     const currentUser = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { role: true },
     });
 
     if (!currentUser) {
@@ -86,7 +79,7 @@ export async function POST(request) {
     }
 
     // Validasi role: hanya Admin/Manajer yang boleh membuat user
-    const roles = currentUser.userRoles.map((ur) => ur.role.name); // Ambil daftar role
+    const roles = currentUser.role ? [currentUser.role.name] : [];
     if (!roles.includes("Admin") && !roles.includes("Manajer")) {
       return NextResponse.json(
         { message: "Unauthorized - Only Admin or Manager can add users" },
@@ -103,9 +96,9 @@ export async function POST(request) {
       );
     }
 
-    // Cek apakah username sudah digunakan
-    const existingUser = await prisma.user.findUnique({
-      where: { username: data.username },
+    // Cek apakah username sudah digunakan oleh user aktif
+    const existingUser = await prisma.user.findFirst({
+      where: { username: data.username, isActive: true },
     });
 
     if (existingUser) {
@@ -147,19 +140,9 @@ export async function POST(request) {
       data: {
         username: data.username,
         password: hashedPassword,
-        userRoles: {
-          create: {
-            roleId: role.id, // Assign role ke user
-          },
-        },
+        roleId: role.id,
       },
-      include: {
-        userRoles: {
-          include: {
-            role: true, // Include data role
-          },
-        },
-      },
+      include: { role: true },
     });
 
     // Catat aktivitas pembuatan user ke audit log
@@ -185,11 +168,8 @@ export async function POST(request) {
       username: newUser.username,
       createdAt: newUser.createdAt,
       updatedAt: newUser.updatedAt,
-      role:
-        newUser.userRoles.length > 0
-          ? newUser.userRoles[0].role.name
-          : "Unknown", // Role utama
-      roles: newUser.userRoles.map((ur) => ur.role.name), // Semua role
+      role: newUser.role ? newUser.role.name : "Unknown",
+      roles: newUser.role ? [newUser.role.name] : [],
     };
 
     return NextResponse.json(formattedUser, { status: 201 }); // Response sukses

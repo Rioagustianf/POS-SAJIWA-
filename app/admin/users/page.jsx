@@ -337,7 +337,6 @@ export default function Users() {
                                   onClick={() => handleEditUser(user)}
                                   className="p-1 rounded-md hover:bg-muted transition-colors"
                                   aria-label="Edit user"
-                                  disabled={user.username === "admin"}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </button>
@@ -345,15 +344,8 @@ export default function Users() {
                                   onClick={() => handleDeleteUser(user)}
                                   className="p-1 rounded-md hover:bg-muted transition-colors text-destructive"
                                   aria-label="Delete user"
-                                  disabled={user.username === "admin"}
                                 >
-                                  <Trash2
-                                    className={`h-4 w-4 ${
-                                      user.username === "admin"
-                                        ? "opacity-50 cursor-not-allowed"
-                                        : ""
-                                    }`}
-                                  />
+                                  <Trash2 className="h-4 w-4" />
                                 </button>
                               </>
                             )}

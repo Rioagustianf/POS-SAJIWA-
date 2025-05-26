@@ -352,29 +352,6 @@ export async function DELETE(request, { params }) {
       );
     }
 
-    // Cek apakah ini admin terakhir
-    const isAdmin = userTarget.userRoles.some((ur) => ur.role.name === "Admin");
-    if (isAdmin) {
-      const adminCount = await prisma.user.count({
-        where: {
-          userRoles: {
-            some: {
-              role: {
-                name: "Admin",
-              },
-            },
-          },
-        },
-      });
-
-      if (adminCount <= 1) {
-        return NextResponse.json(
-          { message: "Cannot delete the last admin user" },
-          { status: 400 }
-        );
-      }
-    }
-
     // Simpan data untuk audit log
     const oldFormattedUser = {
       id: userTarget.id,

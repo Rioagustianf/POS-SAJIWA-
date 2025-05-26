@@ -11,14 +11,15 @@ datasource db {
 }
 
 model User {
-  id        Int         @id @default(autoincrement())
-  username  String      @unique
+  id        Int      @id @default(autoincrement())
+  username  String   @unique
   password  String
-  createdAt DateTime    @default(now())
-  updatedAt DateTime    @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  roleId    Int
+  role      Role     @relation(fields: [roleId], references: [id])
   
   // Relasi
-  userRoles    UserRole[]
   transactions Transaction[] @relation("userTransactions")
   createdProducts Product[]  @relation("productCreatedBy")
   updatedProducts Product[]  @relation("productUpdatedBy")
@@ -32,19 +33,7 @@ model Role {
   name  String @unique // Kasir, Admin, Manajer
   
   // Relasi
-  userRoles UserRole[]
-}
-
-model UserRole {
-  id     Int  @id @default(autoincrement())
-  userId Int
-  roleId Int
-  
-  // Relasi
-  user User @relation(fields: [userId], references: [id])
-  role Role @relation(fields: [roleId], references: [id])
-  
-  @@unique([userId, roleId])
+  users User[]
 }
 
 model Product {

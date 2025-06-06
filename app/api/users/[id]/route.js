@@ -290,10 +290,14 @@ export async function DELETE(request, { params }) {
       role: targetRole,
     };
 
-    // Soft delete user
+    // Soft delete user dengan mengubah username
+    const timestamp = Date.now();
     await prisma.user.update({
       where: { id: parseInt(id) },
-      data: { isActive: false },
+      data: { 
+        isActive: false,
+        username: `${userTarget.username}_deleted_${timestamp}` // Tambahkan suffix
+      },
     });
 
     // Catat ke audit log

@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma"; // Untuk koneksi database
 import { signJWT } from "@/lib/auth"; // Untuk membuat JWT token
 import { table } from "console"; // Import yang tidak digunakan, bisa dihapus
 
-// Fungsi POST untuk handle login
+// Fungsi POST untuk handAle login
 export async function POST(request) {
   try {
     // Ambil username dan password dari request body

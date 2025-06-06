@@ -37,13 +37,27 @@ export async function PUT(request, { params }) {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    // Cek role user
+     // PERBAIKAN: Query yang benar untuk mengambil user dengan relasi role
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { 
+        role: true  // Gunakan 'role' bukan 'roleId' atau 'roles'
+      },
     });
-    const roles = user.userRoles.map((ur) => ur.role.name); // Ambil daftar role
-    if (!roles.includes("Admin") && !roles.includes("Manajer")) {
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 401 });
+    }
+
+    // PERBAIKAN: Akses role yang benar
+    const userRole = user.role?.name; // Akses nama role
+    
+    // Validasi role: hanya Admin/Manajer yang boleh upload
+    if (!userRole || (userRole !== "Admin" && userRole !== "Manajer")) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!userRole.includes("Admin") && !userRole.includes("Manajer")) {
       // Validasi role
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
@@ -109,13 +123,27 @@ export async function DELETE(request, { params }) {
     if (!session) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-    // Cek role user
+     // PERBAIKAN: Query yang benar untuk mengambil user dengan relasi role
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { 
+        role: true  // Gunakan 'role' bukan 'roleId' atau 'roles'
+      },
     });
-    const roles = user.userRoles.map((ur) => ur.role.name); // Ambil daftar role
-    if (!roles.includes("Manajer")) {
+
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 401 });
+    }
+
+    // PERBAIKAN: Akses role yang benar
+    const userRole = user.role?.name; // Akses nama role
+    
+    // Validasi role: hanya Admin/Manajer yang boleh upload
+    if (!userRole || (userRole !== "Admin" && userRole !== "Manajer")) {
+      return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+    }
+
+    if (!userRole.includes("Manajer")) {
       // Validasi role Manajer
       return NextResponse.json(
         { message: "Unauthorized - only Manager can delete products" },

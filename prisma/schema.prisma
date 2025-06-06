@@ -12,7 +12,7 @@ datasource db {
 
 model User {
   id        Int      @id @default(autoincrement())
-  username  String   
+  username  String   @unique
   password  String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -28,7 +28,6 @@ model User {
   updatedTransactions Transaction[] @relation("transactionUpdatedBy")
   auditLogs     AuditLog[]
 
-  @@unique([username, isActive])
 }
 
 model Role {
@@ -106,10 +105,3 @@ model AuditLog {
   user        User     @relation(fields: [userId], references: [id])
 }
 
-model SystemSetting {
-  id        Int      @id @default(autoincrement())
-  key       String   @unique
-  value     String
-  updatedById Int
-  updatedAt  DateTime @updatedAt
-}

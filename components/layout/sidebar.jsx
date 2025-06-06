@@ -103,7 +103,7 @@ export default function Sidebar({ roles = [] }) {
     },
     {
       href: "/admin/print-reports",
-      label: "Cetak Laporan",
+      label: "Laporan Penjualan",
       icon: <Receipt className="h-5 w-5" />,
     },
   ];

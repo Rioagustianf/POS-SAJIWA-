@@ -23,16 +23,24 @@ async function main() {
     where: { name: "Manajer" },
   });
 
-  // Buat user Manajer
-  const manager = await prisma.user.upsert({
+  // Cek apakah user manager sudah ada
+  const existingManager = await prisma.user.findFirst({
     where: { username: "manager" },
-    update: {},
-    create: {
-      username: "manager",
-      password: hashedManagerPassword,
-      roleId: roleManajer.id,
-    },
   });
+
+  // Buat user Manajer jika belum ada
+  if (!existingManager) {
+    await prisma.user.create({
+      data: {
+        username: "manager",
+        password: hashedManagerPassword,
+        roleId: roleManajer.id,
+      },
+    });
+    console.log("✅ User manager berhasil dibuat!");
+  } else {
+    console.log("ℹ️ User manager sudah ada, skip pembuatan.");
+  }
 
   console.log("✅ Seeder berhasil dijalankan!");
 }

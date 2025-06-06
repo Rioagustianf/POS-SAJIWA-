@@ -29,15 +29,23 @@ export async function POST(request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Cek role user dengan mengambil data user dan relasinya
+     // PERBAIKAN: Query yang benar untuk mengambil user dengan relasi role
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { 
+        role: true  // Gunakan 'role' bukan 'roleId' atau 'roles'
+      },
     });
-    const roles = user.userRoles.map((ur) => ur.role.name); // Ambil daftar role
 
-    // Validasi role: hanya Admin/Manajer yang boleh menambah produk
-    if (!roles.includes("Admin") && !roles.includes("Manajer")) {
+    if (!user) {
+      return NextResponse.json({ message: "User not found" }, { status: 401 });
+    }
+
+    // PERBAIKAN: Akses role yang benar
+    const userRole = user.role?.name; // Akses nama role
+    
+    // Validasi role: hanya Admin/Manajer yang boleh upload
+    if (!userRole || (userRole !== "Admin" && userRole !== "Manajer")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 

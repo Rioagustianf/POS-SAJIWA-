@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata = {
   title: "Sajiwa Steak Restaurant - POS System",
   description: "Point of Sale system for Sajiwa Steak Restaurant",
+  icon: [{ url: "/favicon.ico", sizes: "any" }],
 };
 
 export default function RootLayout({ children }) {

@@ -140,7 +140,7 @@ const styles = StyleSheet.create({
 });
 
 // Format currency
-const formatCurrency = (value) => {
+const formatCurrency = (value: number) => {
   return new Intl.NumberFormat("id-ID", {
     style: "currency",
     currency: "IDR",
@@ -149,7 +149,7 @@ const formatCurrency = (value) => {
 };
 
 // Calculate percentage change
-const calculateChange = (current, previous) => {
+const calculateChange = (current: number, previous: number) => {
   if (!previous || previous === 0) return { value: 0, isPositive: true };
   const change = ((current - previous) / previous) * 100;
   return {
@@ -158,7 +158,17 @@ const calculateChange = (current, previous) => {
   };
 };
 
-const ReportPDF = ({ reportData, reportType, dateRange, comparisonData }) => {
+const ReportPDF = ({
+  reportData,
+  reportType,
+  dateRange,
+  comparisonData,
+}: {
+  reportData: any;
+  reportType: string;
+  dateRange: { start: string; end: string };
+  comparisonData: any;
+}) => {
   if (!reportData) return null;
 
   return (
@@ -332,28 +342,30 @@ const ReportPDF = ({ reportData, reportType, dateRange, comparisonData }) => {
               </View>
 
               {/* Table Rows - limit to 15 rows for first page */}
-              {reportData.salesData.slice(0, 15).map((item, index) => (
-                <View key={index} style={styles.tableRow}>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>{item.date}</Text>
+              {reportData.salesData
+                .slice(0, 15)
+                .map((item: any, index: number) => (
+                  <View key={index} style={styles.tableRow}>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>{item.date}</Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>
+                        {formatCurrency(item.sales)}
+                      </Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>{item.orders}</Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>
+                        {formatCurrency(
+                          item.orders > 0 ? item.sales / item.orders : 0
+                        )}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>
-                      {formatCurrency(item.sales)}
-                    </Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>{item.orders}</Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>
-                      {formatCurrency(
-                        item.orders > 0 ? item.sales / item.orders : 0
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                ))}
             </View>
           )}
 
@@ -376,9 +388,9 @@ const ReportPDF = ({ reportData, reportType, dateRange, comparisonData }) => {
               </View>
 
               {/* Table Rows */}
-              {reportData.topProducts.map((item, index) => {
+              {reportData.topProducts.map((item: any, index: number) => {
                 const totalQuantity = reportData.topProducts.reduce(
-                  (sum, i) => sum + i.quantity,
+                  (sum: number, i: any) => sum + i.quantity,
                   0
                 );
                 const percentage = (
@@ -427,9 +439,9 @@ const ReportPDF = ({ reportData, reportType, dateRange, comparisonData }) => {
               </View>
 
               {/* Table Rows */}
-              {reportData.categoryData.map((item, index) => {
+              {reportData.categoryData.map((item: any, index: number) => {
                 const totalQuantity = reportData.categoryData.reduce(
-                  (sum, i) => sum + i.quantity,
+                  (sum: number, i: any) => sum + i.quantity,
                   0
                 );
                 const percentage = (
@@ -515,28 +527,30 @@ const ReportPDF = ({ reportData, reportType, dateRange, comparisonData }) => {
               </View>
 
               {/* Table Rows - remaining rows */}
-              {reportData.salesData.slice(15).map((item, index) => (
-                <View key={index + 15} style={styles.tableRow}>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>{item.date}</Text>
+              {reportData.salesData
+                .slice(15)
+                .map((item: any, index: number) => (
+                  <View key={index + 15} style={styles.tableRow}>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>{item.date}</Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>
+                        {formatCurrency(item.sales)}
+                      </Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>{item.orders}</Text>
+                    </View>
+                    <View style={[styles.tableCol, { width: "25%" }]}>
+                      <Text style={styles.tableCell}>
+                        {formatCurrency(
+                          item.orders > 0 ? item.sales / item.orders : 0
+                        )}
+                      </Text>
+                    </View>
                   </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>
-                      {formatCurrency(item.sales)}
-                    </Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>{item.orders}</Text>
-                  </View>
-                  <View style={[styles.tableCol, { width: "25%" }]}>
-                    <Text style={styles.tableCell}>
-                      {formatCurrency(
-                        item.orders > 0 ? item.sales / item.orders : 0
-                      )}
-                    </Text>
-                  </View>
-                </View>
-              ))}
+                ))}
             </View>
           </View>
 

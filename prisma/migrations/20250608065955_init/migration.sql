@@ -8,6 +8,7 @@ CREATE TABLE `User` (
     `roleId` INTEGER NOT NULL,
     `isActive` BOOLEAN NOT NULL DEFAULT true,
 
+    UNIQUE INDEX `User_username_key`(`username`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 
@@ -78,18 +79,6 @@ CREATE TABLE `AuditLog` (
     `newData` JSON NULL,
     `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
 
-    PRIMARY KEY (`id`)
-) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
--- CreateTable
-CREATE TABLE `SystemSetting` (
-    `id` INTEGER NOT NULL AUTO_INCREMENT,
-    `key` VARCHAR(191) NOT NULL,
-    `value` VARCHAR(191) NOT NULL,
-    `updatedById` INTEGER NOT NULL,
-    `updatedAt` DATETIME(3) NOT NULL,
-
-    UNIQUE INDEX `SystemSetting_key_key`(`key`),
     PRIMARY KEY (`id`)
 ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 

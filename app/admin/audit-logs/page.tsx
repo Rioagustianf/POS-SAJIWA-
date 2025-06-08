@@ -448,7 +448,7 @@ export default function AuditLogs() {
                     // Jika tidak ada data log
                     <tr>
                       <td
-                        colSpan="8"
+                        colSpan={8}
                         className="px-4 py-8 text-center text-muted-foreground"
                       >
                         No audit logs found

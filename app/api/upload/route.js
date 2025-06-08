@@ -5,6 +5,7 @@ import upload from "@/lib/multer"; // Untuk menangani upload file
 import { writeFile } from "fs/promises"; // Untuk menulis file ke sistem
 import path from "path"; // Untuk menangani path file
 import { v4 as uuidv4 } from "uuid"; // Untuk generate nama file unik
+import prisma from "@/lib/prisma"; // Import prisma untuk menghubungkan ke database
 
 // Fungsi POST untuk upload file/gambar
 export async function POST(request) {
@@ -16,11 +17,11 @@ export async function POST(request) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-   // PERBAIKAN: Query yang benar untuk mengambil user dengan relasi role
+    // PERBAIKAN: Query yang benar untuk mengambil user dengan relasi role
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { 
-        role: true  // Gunakan 'role' bukan 'roleId' atau 'roles'
+      include: {
+        role: true, // Gunakan 'role' bukan 'roleId' atau 'roles'
       },
     });
 
@@ -30,12 +31,11 @@ export async function POST(request) {
 
     // PERBAIKAN: Akses role yang benar
     const userRole = user.role?.name; // Akses nama role
-    
+
     // Validasi role: hanya Admin/Manajer yang boleh upload
     if (!userRole || (userRole !== "Admin" && userRole !== "Manajer")) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
-
 
     // Ambil file dari form data request
     const formData = await request.formData();

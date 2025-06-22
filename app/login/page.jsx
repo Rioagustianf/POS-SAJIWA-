@@ -26,6 +26,8 @@ export default function Login() {
   const [formData, setFormData] = useState({ username: "", password: "" });
   // Membuat state untuk menandai proses loading
   const [isLoading, setIsLoading] = useState(false);
+  // Membuat state untuk menampung pesan error
+  const [error, setError] = useState("");
 
   // Fungsi untuk menangani perubahan input form
   const handleChange = (e) => {
@@ -33,6 +35,10 @@ export default function Login() {
     const { name, value } = e.target;
     // Memperbarui state formData dengan nilai baru
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Menghapus pesan error jika ada
+    if (error) {
+      setError("");
+    }
   };
 
   // Fungsi untuk menangani submit form
@@ -41,6 +47,8 @@ export default function Login() {
     e.preventDefault();
     // Mengaktifkan state loading
     setIsLoading(true);
+    // Menghapus pesan error sebelumnya
+    setError("");
     try {
       // Mengirim request POST ke endpoint login
       const response = await fetch("/api/auth/login", {
@@ -48,14 +56,27 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),
       });
-      // Mengubah response menjadi JSON
-      const data = await response.json();
+
       // Mengecek apakah response berhasil
       if (!response.ok) {
-        throw new Error(data.message || "Login failed");
+        if (response.status === 401) {
+          setError("Username atau password salah");
+        } else {
+          try {
+            const errorData = await response.json();
+            // Menampilkan error umum sebagai toast jika bukan error 401
+            toast.error(errorData.message || "Login gagal");
+          } catch (e) {
+            toast.error("Terjadi kesalahan saat login");
+          }
+        }
+        // Hentikan eksekusi lebih lanjut setelah menangani error
+        return;
       }
-      // Menampilkan notifikasi sukses
-      toast.success("Login successful!");
+
+      // Jika berhasil, tampilkan notifikasi sukses dan lanjutkan
+      toast.success("Login berhasil!");
+      const data = await response.json();
 
       // Mendapatkan array roles dari data user
       const roles = data.user.roles || [];
@@ -70,8 +91,8 @@ export default function Login() {
         router.push("/");
       }
     } catch (error) {
-      // Menampilkan notifikasi error jika terjadi kesalahan
-      toast.error(error.message || "Login failed");
+      // Menampilkan notifikasi error jika terjadi kesalahan tak terduga
+      toast.error("Tidak dapat terhubung ke server.");
     } finally {
       // Menonaktifkan state loading setelah proses selesai
       setIsLoading(false);
@@ -200,6 +221,16 @@ export default function Login() {
                 </div>
               </div>
             </div>
+
+            {/* Menampilkan pesan error jika ada */}
+            {error && (
+              <p
+                className="text-sm font-medium text-center"
+                style={{ color: "#fcf259" }}
+              >
+                {error}
+              </p>
+            )}
 
             {/* Container tombol submit */}
             <div>

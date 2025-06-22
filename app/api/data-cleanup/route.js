@@ -15,12 +15,10 @@ export async function POST(request) {
     // Cek role user: hanya Manajer yang boleh mengakses
     const user = await prisma.user.findUnique({
       where: { id: session.id },
-      include: { userRoles: { include: { role: true } } }, // Include relasi role
+      include: { role: true }, // Include relasi role
     });
-    // Ambil daftar role yang dimiliki user
-    const roles = user.userRoles.map((ur) => ur.role.name);
-    // Jika bukan Manajer, tolak akses
-    if (!roles.includes("Manajer")) {
+
+    if (user?.role?.name !== "Manajer") {
       return NextResponse.json({ message: "Forbidden" }, { status: 403 });
     }
 
@@ -88,13 +86,17 @@ export async function POST(request) {
       const users = await prisma.user.findMany({
         where: {
           transactions: { none: { date: { gt: date } } },
-          userRoles: { some: { role: { name: { not: "Manajer" } } } }, // Jangan hapus Manajer
+          role: {
+            name: { not: "Manajer" }, // Jangan hapus Manajer
+          },
         },
         select: { id: true },
       });
       const ids = users.map((u) => u.id);
-      // Hapus role user terlebih dahulu
-      await prisma.userRole.deleteMany({ where: { userId: { in: ids } } });
+
+      // Hapus audit log terkait user yang akan dihapus
+      await prisma.auditLog.deleteMany({ where: { userId: { in: ids } } });
+
       // Hapus user
       const result = await prisma.user.deleteMany({
         where: { id: { in: ids } },

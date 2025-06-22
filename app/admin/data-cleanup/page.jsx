@@ -3,6 +3,17 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import AdminLayout from "@/components/layout/admin-layout";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const CLEANUP_TYPES = [
   { value: "transactions", label: "Transaksi Lama" },
@@ -21,26 +32,13 @@ export default function DataCleanupPage() {
   const [isLoading, setIsLoading] = useState(false);
   // State untuk hasil proses pembersihan
   const [result, setResult] = useState("");
+  // State untuk mengontrol dialog konfirmasi
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Fungsi untuk submit form pembersihan data
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (!type || !beforeDate) {
-      toast.error("Pilih jenis data dan tanggal batas!");
-      return;
-    }
-
+  // Fungsi untuk menjalankan pembersihan data setelah konfirmasi
+  const handleCleanup = async () => {
     setIsLoading(true);
     setResult("");
-    // Konfirmasi dari user sebelum menjalankan pembersihan data
-    if (
-      !confirm(
-        "Anda yakin ingin menghapus data ini? Data yang dihapus tidak dapat dikembalikan."
-      )
-    ) {
-      return; // Batalkan jika user tidak mengkonfirmasi
-    }
     try {
       // Kirim request ke endpoint API pembersihan data
       const res = await fetch("/api/data-cleanup", {
@@ -66,6 +64,18 @@ export default function DataCleanupPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fungsi untuk submit form, hanya memvalidasi dan membuka dialog
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    if (!type || !beforeDate) {
+      toast.error("Pilih jenis data dan tanggal batas!");
+      return;
+    }
+
+    setIsDialogOpen(true); // Membuka dialog konfirmasi
   };
 
   return (
@@ -107,13 +117,32 @@ export default function DataCleanupPage() {
               required
             />
           </div>
-          <button
-            type="submit"
-            disabled={isLoading}
-            className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
-          >
-            {isLoading ? "Memproses..." : "Mulai Cleanup"}
-          </button>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <AlertDialogTrigger asChild>
+              <button
+                type="submit"
+                disabled={isLoading}
+                className="px-4 py-2 bg-destructive text-destructive-foreground rounded-md hover:bg-destructive/90 transition-colors"
+              >
+                {isLoading ? "Memproses..." : "Mulai Cleanup"}
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Anda yakin sepenuhnya?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Tindakan ini tidak dapat dibatalkan. Data yang dipilih akan
+                  dihapus secara permanen dari server.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Batal</AlertDialogCancel>
+                <AlertDialogAction onClick={handleCleanup}>
+                  Lanjutkan
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </form>
         {result && (
           <div className="mt-4 p-3 bg-green-100 text-green-800 rounded">

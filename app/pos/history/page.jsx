@@ -115,13 +115,13 @@ export default function SalesHistory() {
 
   // Render komponen
   return (
-    // Container utama dengan padding
-    <div className="p-4 md:p-6">
+    // Container utama dengan padding dan w-full
+    <div className="p-4 md:p-6 w-full">
       {/* Judul halaman */}
       <h1 className="text-3xl font-bold mb-6">Sales History</h1>
 
       {/* Container untuk filter pencarian dan tanggal */}
-      <div className="flex flex-col md:flex-row gap-4 mb-6">
+      <div className="flex flex-col md:flex-row gap-4 mb-6 w-full">
         {/* Input pencarian dengan icon */}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -135,13 +135,13 @@ export default function SalesHistory() {
         </div>
 
         {/* Input filter tanggal dengan icon */}
-        <div className="relative">
+        <div className="relative w-full md:w-64">
           <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
           <input
             type="date"
             value={dateFilter}
             onChange={handleDateFilter}
-            className="pl-9 pr-4 py-2 border border-input rounded-md bg-background"
+            className="pl-9 pr-4 py-2 border border-input rounded-md bg-background w-full"
           />
         </div>
       </div>
@@ -149,7 +149,7 @@ export default function SalesHistory() {
       {/* Tampilkan loading spinner atau tabel transaksi */}
       {isLoading ? (
         // Loading spinner
-        <div className="flex items-center justify-center h-64">
+        <div className="flex items-center justify-center h-64 w-full">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
             <p className="mt-2 text-muted-foreground">
@@ -159,8 +159,8 @@ export default function SalesHistory() {
         </div>
       ) : (
         // Tabel transaksi
-        <div className="bg-card rounded-lg shadow overflow-hidden">
-          <div className="overflow-x-auto">
+        <div className="bg-card rounded-lg shadow overflow-hidden w-full">
+          <div className="overflow-x-auto w-full">
             <table className="w-full">
               {/* Header tabel */}
               <thead>

@@ -3,7 +3,13 @@
 // Import hooks yang diperlukan dari React
 import { useEffect, useState } from "react";
 // Import komponen Sidebar untuk navigasi
-import Sidebar from "@/components/layout/sidebar";
+import AppSidebar from "@/components/layout/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 // Mendefinisikan dan mengekspor komponen layout utama dengan props children
 export default function PosLayout({ children }) {
@@ -56,14 +62,23 @@ export default function PosLayout({ children }) {
 
   // Render layout utama dengan sidebar dan konten
   return (
-    <div className="min-h-screen bg-background">
-      {/* Render Sidebar dengan passing props roles */}
-      <Sidebar roles={roles} />
-      {/* Container untuk konten utama dengan margin kiri untuk sidebar */}
-      <div className="lg:ml-72 min-h-screen">
-        {/* Render children components */}
-        <main>{children}</main>
+    <SidebarProvider>
+      <div className="min-h-screen bg-background flex w-full">
+        {/* Render Sidebar dengan passing props roles */}
+        <AppSidebar roles={roles} />
+        {/* Container untuk konten utama */}
+        <SidebarInset className="flex-1 flex flex-col w-full min-w-0">
+          <header className="flex h-12 shrink-0 items-center gap-2 border-b px-4 bg-background w-full min-w-0">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div className="font-semibold">Transaksi Baru</div>
+          </header>
+          {/* Render children components */}
+          <main className="flex-1 overflow-auto w-full min-w-0">
+            {children}
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

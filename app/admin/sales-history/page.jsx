@@ -159,26 +159,31 @@ export default function SalesHistory() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-3xl font-bold">Sales History</h1>
+      <div className="space-y-4 w-full">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 w-full">
+          <div>
+            <h1 className="text-2xl font-bold">Riwayat Penjualan</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola dan lihat riwayat transaksi penjualan
+            </p>
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
                 type="text"
-                placeholder="Search transactions..."
+                placeholder="Cari transaksi..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="pl-9 pr-4 py-2 border border-input rounded-md w-full sm:w-64 bg-background"
+                className="pl-9 pr-3 py-2 border border-input rounded-md w-full sm:w-56 bg-background text-sm"
               />
             </div>
 
             <div className="flex gap-2">
               <button
                 onClick={handleExportPDF}
-                className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-md hover:bg-secondary/90 transition-colors"
+                className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-3 py-2 rounded-md hover:bg-secondary/90 transition-colors text-sm"
               >
                 <FileDown className="h-4 w-4" />
                 Export PDF
@@ -187,7 +192,7 @@ export default function SalesHistory() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 w-full">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             <input
@@ -195,8 +200,8 @@ export default function SalesHistory() {
               name="start"
               value={dateRange.start}
               onChange={handleDateRangeChange}
-              className="px-3 py-2 border border-input rounded-md bg-background w-full"
-              placeholder="Start Date"
+              className="px-3 py-2 border border-input rounded-md bg-background w-full text-sm"
+              placeholder="Tanggal Mulai"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -206,8 +211,8 @@ export default function SalesHistory() {
               name="end"
               value={dateRange.end}
               onChange={handleDateRangeChange}
-              className="px-3 py-2 border border-input rounded-md bg-background w-full"
-              placeholder="End Date"
+              className="px-3 py-2 border border-input rounded-md bg-background w-full text-sm"
+              placeholder="Tanggal Akhir"
             />
           </div>
           <div className="flex items-center gap-2">
@@ -215,12 +220,16 @@ export default function SalesHistory() {
             <select
               value={filterPaymentMethod}
               onChange={(e) => setFilterPaymentMethod(e.target.value)}
-              className="px-3 py-2 border border-input rounded-md bg-background w-full"
+              className="px-3 py-2 border border-input rounded-md bg-background w-full text-sm"
             >
-              <option value="">All Payment Methods</option>
+              <option value="">Semua Metode Pembayaran</option>
               {paymentMethods.map((method) => (
                 <option key={method} value={method}>
-                  {method}
+                  {method === "cash"
+                    ? "Tunai"
+                    : method === "qris"
+                    ? "QRIS"
+                    : method}
                 </option>
               ))}
             </select>
@@ -228,91 +237,93 @@ export default function SalesHistory() {
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-48">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">
-                Loading transactions...
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Memuat transaksi...
               </p>
             </div>
           </div>
         ) : (
-          <div className="bg-card rounded-lg shadow overflow-hidden">
+          <div className="bg-card rounded-lg shadow overflow-hidden w-full">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
                   <tr className="bg-muted/50">
                     <th
-                      className="px-4 py-3 text-left cursor-pointer"
+                      className="px-3 py-2 text-left cursor-pointer text-sm font-medium"
                       onClick={() => handleSort("id")}
                     >
                       <div className="flex items-center gap-1">
                         ID
                         {sortConfig.key === "id" &&
                           (sortConfig.direction === "asc" ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-3 w-3" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-3 w-3" />
                           ))}
                       </div>
                     </th>
                     <th
-                      className="px-4 py-3 text-left cursor-pointer"
+                      className="px-3 py-2 text-left cursor-pointer text-sm font-medium"
                       onClick={() => handleSort("date")}
                     >
                       <div className="flex items-center gap-1">
-                        Date
+                        Tanggal
                         {sortConfig.key === "date" &&
                           (sortConfig.direction === "asc" ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-3 w-3" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-3 w-3" />
                           ))}
                       </div>
                     </th>
                     <th
-                      className="px-4 py-3 text-left cursor-pointer"
+                      className="px-3 py-2 text-left cursor-pointer text-sm font-medium"
                       onClick={() => handleSort("cashier")}
                     >
                       <div className="flex items-center gap-1">
-                        Cashier
+                        Kasir
                         {sortConfig.key === "cashier" &&
                           (sortConfig.direction === "asc" ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-3 w-3" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-3 w-3" />
                           ))}
                       </div>
                     </th>
                     <th
-                      className="px-4 py-3 text-left cursor-pointer"
+                      className="px-3 py-2 text-left cursor-pointer text-sm font-medium"
                       onClick={() => handleSort("total")}
                     >
                       <div className="flex items-center gap-1">
                         Total
                         {sortConfig.key === "total" &&
                           (sortConfig.direction === "asc" ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-3 w-3" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-3 w-3" />
                           ))}
                       </div>
                     </th>
                     <th
-                      className="px-4 py-3 text-left cursor-pointer"
+                      className="px-3 py-2 text-left cursor-pointer text-sm font-medium"
                       onClick={() => handleSort("paymentMethod")}
                     >
                       <div className="flex items-center gap-1">
-                        Payment Method
+                        Metode Bayar
                         {sortConfig.key === "paymentMethod" &&
                           (sortConfig.direction === "asc" ? (
-                            <ChevronUp className="h-4 w-4" />
+                            <ChevronUp className="h-3 w-3" />
                           ) : (
-                            <ChevronDown className="h-4 w-4" />
+                            <ChevronDown className="h-3 w-3" />
                           ))}
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left">Actions</th>
+                    <th className="px-3 py-2 text-left text-sm font-medium">
+                      Aksi
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -323,64 +334,70 @@ export default function SalesHistory() {
                           key={transaction.id}
                           className="border-t border-border hover:bg-muted/50"
                         >
-                          <td className="px-4 py-3 font-medium">
+                          <td className="px-3 py-2 font-medium text-sm">
                             #{transaction.id}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2 text-sm">
                             {format(
                               new Date(transaction.date),
-                              "MMM d, yyyy h:mm a"
+                              "dd/MM/yyyy HH:mm"
                             )}
                           </td>
-                          <td className="px-4 py-3">{transaction.cashier}</td>
-                          <td className="px-4 py-3 font-medium">
+                          <td className="px-3 py-2 text-sm">
+                            {transaction.cashier}
+                          </td>
+                          <td className="px-3 py-2 font-medium text-sm">
                             {formatCurrency(transaction.total)}
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2">
                             <span
                               className={`px-2 py-1 rounded-full text-xs ${
-                                transaction.paymentMethod === "Cash"
+                                transaction.paymentMethod === "cash"
                                   ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300"
-                                  : transaction.paymentMethod === "Credit Card"
+                                  : transaction.paymentMethod === "qris"
                                   ? "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
                                   : "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300"
                               }`}
                             >
-                              {transaction.paymentMethod}
+                              {transaction.paymentMethod === "cash"
+                                ? "Tunai"
+                                : transaction.paymentMethod === "qris"
+                                ? "QRIS"
+                                : transaction.paymentMethod}
                             </span>
                           </td>
-                          <td className="px-4 py-3">
+                          <td className="px-3 py-2">
                             <button
                               onClick={() =>
                                 toggleTransactionDetails(transaction.id)
                               }
-                              className="flex items-center gap-1 text-primary hover:underline"
+                              className="flex items-center gap-1 text-primary hover:underline text-xs"
                             >
-                              <FileText className="h-4 w-4" />
+                              <FileText className="h-3 w-3" />
                               {expandedTransaction === transaction.id
-                                ? "Hide"
-                                : "View"}{" "}
-                              Details
+                                ? "Tutup"
+                                : "Lihat"}{" "}
+                              Detail
                             </button>
                           </td>
                         </tr>
                         {expandedTransaction === transaction.id && (
                           <tr className="bg-muted/30">
-                            <td colSpan="6" className="px-4 py-3">
+                            <td colSpan="6" className="px-3 py-2">
                               <div className="rounded-md bg-card p-3 border border-border">
-                                <h4 className="font-medium mb-2">
-                                  Transaction Items
+                                <h4 className="font-medium mb-2 text-sm">
+                                  Item Transaksi
                                 </h4>
                                 <table className="w-full">
                                   <thead>
-                                    <tr className="border-b border-border text-sm">
-                                      <th className="px-3 py-2 text-left">
-                                        Product
+                                    <tr className="border-b border-border text-xs">
+                                      <th className="px-2 py-1 text-left">
+                                        Produk
                                       </th>
-                                      <th className="px-3 py-2 text-right">
-                                        Quantity
+                                      <th className="px-2 py-1 text-right">
+                                        Jumlah
                                       </th>
-                                      <th className="px-3 py-2 text-right">
+                                      <th className="px-2 py-1 text-right">
                                         Subtotal
                                       </th>
                                     </tr>
@@ -391,13 +408,13 @@ export default function SalesHistory() {
                                         key={item.id}
                                         className="border-b border-border/50 last:border-0"
                                       >
-                                        <td className="px-3 py-2 text-left">
+                                        <td className="px-2 py-1 text-left text-xs">
                                           {item.name}
                                         </td>
-                                        <td className="px-3 py-2 text-right">
+                                        <td className="px-2 py-1 text-right text-xs">
                                           {item.quantity}
                                         </td>
-                                        <td className="px-3 py-2 text-right">
+                                        <td className="px-2 py-1 text-right text-xs">
                                           {formatCurrency(item.subtotal)}
                                         </td>
                                       </tr>
@@ -406,12 +423,12 @@ export default function SalesHistory() {
                                   <tfoot>
                                     <tr className="font-medium">
                                       <td
-                                        className="px-3 py-2 text-left"
+                                        className="px-2 py-1 text-left text-xs"
                                         colSpan="2"
                                       >
                                         Total
                                       </td>
-                                      <td className="px-3 py-2 text-right">
+                                      <td className="px-2 py-1 text-right text-xs">
                                         {formatCurrency(transaction.total)}
                                       </td>
                                     </tr>
@@ -427,9 +444,9 @@ export default function SalesHistory() {
                     <tr>
                       <td
                         colSpan="6"
-                        className="px-4 py-8 text-center text-muted-foreground"
+                        className="px-3 py-6 text-center text-muted-foreground text-sm"
                       >
-                        No transactions found
+                        Tidak ada transaksi ditemukan
                       </td>
                     </tr>
                   )}

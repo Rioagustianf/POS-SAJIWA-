@@ -344,37 +344,44 @@ export default function Products() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <h1 className="text-3xl font-bold">Products</h1>
+      <div className="space-y-4">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold">Kelola Produk</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Kelola produk dan stok inventory
+            </p>
+          </div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
+          <div className="flex flex-col sm:flex-row gap-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Cari produk..."
                 value={searchTerm}
                 onChange={handleSearch}
-                className="pl-9 pr-4 py-2 border border-input rounded-md w-full sm:w-64 bg-background"
+                className="pl-9 pr-3 py-2 border border-input rounded-md w-full sm:w-56 bg-background text-sm"
               />
             </div>
 
             <button
               onClick={handleAddProduct}
-              className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary/90 transition-colors"
+              className="flex items-center justify-center gap-2 bg-primary text-primary-foreground px-3 py-2 rounded-md hover:bg-primary/90 transition-colors text-sm"
             >
               <Plus className="h-4 w-4" />
-              Add Product
+              Tambah Produk
             </button>
           </div>
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center h-64">
+          <div className="flex items-center justify-center h-48">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
-              <p className="mt-2 text-muted-foreground">Loading products...</p>
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary mx-auto"></div>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Memuat produk...
+              </p>
             </div>
           </div>
         ) : (
@@ -383,35 +390,41 @@ export default function Products() {
               <table className="w-full">
                 <thead>
                   <tr className="bg-muted/50">
-                    <th className="px-4 py-3 text-left">Image</th>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-3 py-2 text-left text-sm font-medium">
+                      Gambar
+                    </th>
+                    <th className="px-3 py-2 text-left text-sm font-medium">
                       <div className="flex items-center gap-1">
-                        Name
-                        <ArrowUpDown className="h-4 w-4" />
+                        Nama
+                        <ArrowUpDown className="h-3 w-3" />
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-3 py-2 text-left text-sm font-medium">
                       <div className="flex items-center gap-1">
-                        Price
-                        <ArrowUpDown className="h-4 w-4" />
+                        Harga
+                        <ArrowUpDown className="h-3 w-3" />
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left">
+                    <th className="px-3 py-2 text-left text-sm font-medium">
                       <div className="flex items-center gap-1">
-                        Stock
-                        <ArrowUpDown className="h-4 w-4" />
+                        Stok
+                        <ArrowUpDown className="h-3 w-3" />
                       </div>
                     </th>
-                    <th className="px-4 py-3 text-left">Category</th>
-                    <th className="px-4 py-3 text-left">Actions</th>
+                    <th className="px-3 py-2 text-left text-sm font-medium">
+                      Kategori
+                    </th>
+                    <th className="px-3 py-2 text-left text-sm font-medium">
+                      Aksi
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredProducts.length > 0 ? (
                     filteredProducts.map((product) => (
                       <tr key={product.id} className="border-t border-border">
-                        <td className="px-4 py-3">
-                          <div className="h-12 w-12 rounded overflow-hidden">
+                        <td className="px-3 py-2">
+                          <div className="h-10 w-10 rounded overflow-hidden">
                             <img
                               src={
                                 product.image ||
@@ -422,19 +435,19 @@ export default function Products() {
                             />
                           </div>
                         </td>
-                        <td className="px-4 py-3 font-medium">
+                        <td className="px-3 py-2 font-medium text-sm">
                           {product.name}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2 text-sm">
                           {formatCurrency(product.price)}
                         </td>
-                        <td className="px-4 py-3">{product.stock}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2 text-sm">{product.stock}</td>
+                        <td className="px-3 py-2">
                           <span className="px-2 py-1 rounded-full text-xs bg-secondary text-secondary-foreground">
-                            {product.category || "Uncategorized"}
+                            {product.category || "Tidak dikategorikan"}
                           </span>
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2">
                           <div className="flex items-center gap-2">
                             <button
                               onClick={() => handleEditProduct(product)}
@@ -477,9 +490,9 @@ export default function Products() {
                     <tr>
                       <td
                         colSpan="6"
-                        className="px-4 py-8 text-center text-muted-foreground"
+                        className="px-3 py-6 text-center text-muted-foreground text-sm"
                       >
-                        No products found
+                        Tidak ada produk ditemukan
                       </td>
                     </tr>
                   )}

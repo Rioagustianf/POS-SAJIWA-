@@ -1,6 +1,12 @@
 "use client";
 import { useEffect, useState } from "react";
-import Sidebar from "./sidebar";
+import AppSidebar from "./sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
+import { Separator } from "@/components/ui/separator";
 
 export default function AdminLayout({ children }) {
   const [user, setUser] = useState(null);
@@ -38,11 +44,34 @@ export default function AdminLayout({ children }) {
   const roles = user?.roles || [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar roles={roles} />
-      <div className="lg:ml-72 min-h-screen">
-        <main className="p-4 md:p-6 lg:p-8">{children}</main>
+    <SidebarProvider>
+      <div
+        className="min-h-screen bg-background flex w-full"
+        style={{ maxWidth: "none", margin: 0 }}
+      >
+        <AppSidebar roles={roles} />
+        <SidebarInset
+          className="flex-1 flex flex-col w-full"
+          style={{ maxWidth: "none", width: "100%" }}
+        >
+          <header className="flex h-10 shrink-0 items-center gap-2 border-b px-3 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 w-full">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <div className="font-semibold text-sm">Admin Panel</div>
+          </header>
+          <main
+            className="flex-1 overflow-auto p-3 w-full min-w-0"
+            style={{ maxWidth: "none", width: "100%" }}
+          >
+            <div
+              className="w-full min-w-0"
+              style={{ maxWidth: "none", width: "100%" }}
+            >
+              {children}
+            </div>
+          </main>
+        </SidebarInset>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }

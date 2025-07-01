@@ -21,15 +21,24 @@ import {
   Receipt,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+  SidebarTrigger,
+  SidebarFooter,
+} from "@/components/ui/sidebar";
 
-export default function Sidebar({ roles = [] }) {
+export default function AppSidebar({ roles = [] }) {
   const pathname = usePathname();
   const router = useRouter();
-  const [isOpen, setIsOpen] = useState(false);
-
-  const toggleSidebar = () => {
-    setIsOpen(!isOpen);
-  };
 
   const handleLogout = async () => {
     try {
@@ -147,81 +156,75 @@ export default function Sidebar({ roles = [] }) {
   const activeHref = getActiveHref(pathname, links);
 
   return (
-    <>
-      {/* Mobile menu button */}
-      <button
-        onClick={toggleSidebar}
-        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-md bg-[#c5172e] text-white"
-        aria-label="Toggle menu"
-      >
-        {isOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-      </button>
+    <Sidebar className="border-r border-[#4a102a]">
+      <SidebarHeader className="bg-[#4a102a] p-4">
+        <div className="flex items-center gap-2">
+          <Utensils className="h-6 w-6 text-[#fcf259]" />
+          <h1 className="text-xl font-bold text-white">Sajiwa Steak</h1>
+          <span className="ml-auto bg-[#85193c] text-white text-xs px-2 py-1 rounded">
+            {roles.join(", ")}
+          </span>
+        </div>
+      </SidebarHeader>
 
-      {/* Overlay */}
-      {isOpen && (
-        <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-40"
-          onClick={toggleSidebar}
-        />
-      )}
-
-      {/* Sidebar */}
-      <aside
-        className={`fixed top-0 left-0 z-40 h-screen transition-transform ${
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        } bg-[#fcf259] border-r border-[#4a102a] w-64 lg:w-72`}
-      >
-        <div className="flex flex-col h-full">
-          <div
-            className="flex items-center gap-2 px-6 py-4"
-            style={{ background: "#4a102a" }}
-          >
-            <Utensils className="h-6 w-6 text-[#fcf259]" />
-            <h1 className="text-xl font-bold text-white">Sajiwa Steak</h1>
-            <span className="ml-auto bg-[#85193c] text-white text-xs px-2 py-1 rounded">
-              {roles.join(", ")}
-            </span>
-          </div>
-
-          <nav className="flex-1 px-3 py-4 overflow-y-auto">
-            <ul className="space-y-1">
+      <SidebarContent className="bg-[#fcf259]">
+        <SidebarGroup>
+          <SidebarGroupLabel className="text-[#4a102a] font-semibold">
+            Menu
+          </SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
               {links.length > 0 ? (
                 links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className={`flex items-center px-3 py-2 rounded-md transition-colors font-medium
-                        ${
-                          activeHref === link.href
-                            ? "bg-[#c5172e] text-white"
-                            : "text-[#4a102a] hover:bg-[#85193c]/20 hover:text-[#85193c]"
-                        }
-                      `}
+                  <SidebarMenuItem key={link.href}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={activeHref === link.href}
+                      className={`${
+                        activeHref === link.href
+                          ? "bg-[#c5172e] text-white hover:bg-[#c5172e]/90"
+                          : "text-[#4a102a] hover:bg-[#85193c]/20 hover:text-[#85193c]"
+                      }`}
                     >
-                      {link.icon}
-                      <span className="ml-3">{link.label}</span>
-                    </Link>
-                  </li>
+                      <Link href={link.href}>
+                        {link.icon}
+                        <span className="ml-3">{link.label}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 ))
               ) : (
-                <li className="text-center text-[#85193c] opacity-60">
-                  No menu items available
-                </li>
+                <SidebarMenuItem>
+                  <span className="text-center text-[#85193c] opacity-60 block p-2">
+                    No menu items available
+                  </span>
+                </SidebarMenuItem>
               )}
-            </ul>
-          </nav>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-          <div className="p-4 border-t border-[#4a102a]">
-            <button
-              onClick={handleLogout}
-              className="flex items-center w-full px-3 py-2 text-sm rounded-md hover:bg-[#85193c]/20 text-[#85193c] transition-colors"
+      <SidebarFooter className="bg-[#fcf259] border-t border-[#4a102a]/20">
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton
+              asChild
+              className="text-[#4a102a] hover:bg-[#85193c]/20 hover:text-[#85193c]"
             >
-              <LogOut className="h-5 w-5 mr-3" />
-              Logout
-            </button>
-          </div>
-        </div>
-      </aside>
-    </>
+              <button
+                onClick={handleLogout}
+                className="flex items-center w-full"
+              >
+                <LogOut className="h-5 w-5" />
+                <span className="ml-3">Logout</span>
+              </button>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+
+      <SidebarRail />
+    </Sidebar>
   );
 }

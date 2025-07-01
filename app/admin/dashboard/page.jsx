@@ -144,10 +144,10 @@ export default function Dashboard() {
   if (isLoading) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
-            <p className="mt-4 text-muted-foreground">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="mt-3 text-sm text-muted-foreground">
               Memuat data dashboard...
             </p>
           </div>
@@ -159,15 +159,15 @@ export default function Dashboard() {
   if (error) {
     return (
       <AdminLayout>
-        <div className="flex items-center justify-center h-96">
+        <div className="flex items-center justify-center h-64">
           <div className="text-center">
-            <p className="text-red-500 font-medium">
+            <p className="text-red-500 font-medium text-sm">
               Gagal memuat data dashboard
             </p>
-            <p className="mt-2 text-muted-foreground">{error}</p>
+            <p className="mt-2 text-muted-foreground text-sm">{error}</p>
             <button
               onClick={() => window.location.reload()}
-              className="mt-4 px-4 py-2 bg-primary text-white rounded-md"
+              className="mt-3 px-3 py-2 bg-primary text-white rounded-md text-sm"
             >
               Coba Lagi
             </button>
@@ -179,76 +179,81 @@ export default function Dashboard() {
 
   return (
     <AdminLayout>
-      <div className="space-y-6">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
+      <div className="space-y-4 w-full">
+        <div className="flex items-center justify-between w-full">
+          <h1 className="text-2xl font-bold">Dashboard</h1>
+          <p className="text-sm text-muted-foreground">
+            Ringkasan data dan statistik terkini
+          </p>
+        </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="bg-card rounded-lg shadow p-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full">
+          <div className="bg-card rounded-lg shadow p-4">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-blue-100 dark:bg-blue-900">
-                <DollarSign className="h-6 w-6 text-blue-600 dark:text-blue-300" />
+              <div className="p-2 rounded-full bg-blue-100 dark:bg-blue-900">
+                <DollarSign className="h-5 w-5 text-blue-600 dark:text-blue-300" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Sales
+              <div className="ml-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Total Penjualan
                 </p>
-                <h3 className="text-xl font-bold">
+                <h3 className="text-lg font-bold">
                   {formatCurrency(stats.totalSales)}
                 </h3>
               </div>
             </div>
           </div>
 
-          <div className="bg-card rounded-lg shadow p-6">
+          <div className="bg-card rounded-lg shadow p-4">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-green-100 dark:bg-green-900">
-                <ShoppingBag className="h-6 w-6 text-green-600 dark:text-green-300" />
+              <div className="p-2 rounded-full bg-green-100 dark:bg-green-900">
+                <ShoppingBag className="h-5 w-5 text-green-600 dark:text-green-300" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Total Orders
+              <div className="ml-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Total Pesanan
                 </p>
-                <h3 className="text-xl font-bold">{stats.totalOrders}</h3>
+                <h3 className="text-lg font-bold">{stats.totalOrders}</h3>
               </div>
             </div>
           </div>
 
-          <div className="bg-card rounded-lg shadow p-6">
+          <div className="bg-card rounded-lg shadow p-4">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-purple-100 dark:bg-purple-900">
-                <TrendingUp className="h-6 w-6 text-purple-600 dark:text-purple-300" />
+              <div className="p-2 rounded-full bg-purple-100 dark:bg-purple-900">
+                <TrendingUp className="h-5 w-5 text-purple-600 dark:text-purple-300" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Products
+              <div className="ml-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Total Produk
                 </p>
-                <h3 className="text-xl font-bold">{stats.totalProducts}</h3>
+                <h3 className="text-lg font-bold">{stats.totalProducts}</h3>
               </div>
             </div>
           </div>
 
-          <div className="bg-card rounded-lg shadow p-6">
+          <div className="bg-card rounded-lg shadow p-4">
             <div className="flex items-center">
-              <div className="p-3 rounded-full bg-orange-100 dark:bg-orange-900">
-                <Users className="h-6 w-6 text-orange-600 dark:text-orange-300" />
+              <div className="p-2 rounded-full bg-orange-100 dark:bg-orange-900">
+                <Users className="h-5 w-5 text-orange-600 dark:text-orange-300" />
               </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-muted-foreground">
-                  Users
+              <div className="ml-3">
+                <p className="text-xs font-medium text-muted-foreground">
+                  Total Pengguna
                 </p>
-                <h3 className="text-xl font-bold">{stats.totalUsers}</h3>
+                <h3 className="text-lg font-bold">{stats.totalUsers}</h3>
               </div>
             </div>
           </div>
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
           {/* Sales Chart */}
-          <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Weekly Sales</h3>
-            <div className="h-80">
+          <div className="bg-card rounded-lg shadow p-4">
+            <h3 className="text-base font-semibold mb-3">Penjualan Mingguan</h3>
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={salesData}
@@ -266,7 +271,7 @@ export default function Dashboard() {
                     }
                   />
                   <Tooltip
-                    formatter={(value) => [formatCurrency(value), "Sales"]}
+                    formatter={(value) => [formatCurrency(value), "Penjualan"]}
                   />
                   <Bar dataKey="sales" fill="hsl(var(--chart-1))" />
                 </BarChart>
@@ -275,9 +280,9 @@ export default function Dashboard() {
           </div>
 
           {/* Top Products Chart */}
-          <div className="bg-card rounded-lg shadow p-6">
-            <h3 className="text-lg font-semibold mb-4">Top Products</h3>
-            <div className="h-80">
+          <div className="bg-card rounded-lg shadow p-4">
+            <h3 className="text-base font-semibold mb-3">Produk Terlaris</h3>
+            <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
@@ -300,7 +305,7 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   <Tooltip
-                    formatter={(value) => [`${value} orders`, "Quantity"]}
+                    formatter={(value) => [`${value} pesanan`, "Kuantitas"]}
                   />
                   <Legend />
                 </PieChart>
@@ -310,24 +315,34 @@ export default function Dashboard() {
         </div>
 
         {/* Recent Orders */}
-        <div className="bg-card rounded-lg shadow p-6">
-          <h3 className="text-lg font-semibold mb-4">Recent Orders</h3>
+        <div className="bg-card rounded-lg shadow p-4 w-full">
+          <h3 className="text-base font-semibold mb-3">Pesanan Terbaru</h3>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="px-4 py-3 text-left">Order ID</th>
-                  <th className="px-4 py-3 text-left">Customer</th>
-                  <th className="px-4 py-3 text-left">Date</th>
-                  <th className="px-4 py-3 text-left">Amount</th>
-                  <th className="px-4 py-3 text-left">Status</th>
+                  <th className="px-3 py-2 text-left text-sm font-medium">
+                    ID Pesanan
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium">
+                    Pelanggan
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium">
+                    Tanggal
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium">
+                    Jumlah
+                  </th>
+                  <th className="px-3 py-2 text-left text-sm font-medium">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
                 {salesData.length === 0 ? (
                   <tr>
-                    <td colSpan="5" className="px-4 py-3 text-center">
-                      No recent orders
+                    <td colSpan="5" className="px-3 py-2 text-center text-sm">
+                      Tidak ada pesanan terbaru
                     </td>
                   </tr>
                 ) : (
@@ -337,20 +352,22 @@ export default function Dashboard() {
                     .slice(0, 3)
                     .map((day, index) => (
                       <tr key={index} className="border-b border-border">
-                        <td className="px-4 py-3">{`#ORD-${String(
+                        <td className="px-3 py-2 text-sm">{`#ORD-${String(
                           index + 1
                         ).padStart(3, "0")}`}</td>
-                        <td className="px-4 py-3">{`Cashier ${index + 1}`}</td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2 text-sm">{`Kasir ${
+                          index + 1
+                        }`}</td>
+                        <td className="px-3 py-2 text-sm">
                           {new Date().toISOString().split("T")[0]} {index + 14}
                           :30
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2 text-sm">
                           {formatCurrency(day.sales)}
                         </td>
-                        <td className="px-4 py-3">
+                        <td className="px-3 py-2 text-sm">
                           <span className="px-2 py-1 rounded-full text-xs bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300">
-                            Completed
+                            Selesai
                           </span>
                         </td>
                       </tr>

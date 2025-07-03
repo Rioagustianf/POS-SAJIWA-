@@ -182,8 +182,8 @@ export default function AppSidebar({ roles = [] }) {
                       isActive={activeHref === link.href}
                       className={`${
                         activeHref === link.href
-                          ? "bg-[#c5172e] text-white hover:bg-[#c5172e]/90"
-                          : "text-[#4a102a] hover:bg-[#85193c]/20 hover:text-[#85193c]"
+                          ? "bg-[#ff2253] text-white hover:bg-[#ff2253]/90"
+                          : "text-[#4a102a] hover:bg-[#ff2253]/20 hover:text-[#ff2253]"
                       }`}
                     >
                       <Link href={link.href}>

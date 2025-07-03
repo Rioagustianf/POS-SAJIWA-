@@ -293,9 +293,6 @@ export default function Dashboard() {
                     outerRadius={80}
                     fill="#8884d8"
                     dataKey="value"
-                    label={({ name, percent }) =>
-                      `${name} ${(percent * 100).toFixed(0)}%`
-                    }
                   >
                     {topProducts.map((entry, index) => (
                       <Cell
@@ -307,9 +304,33 @@ export default function Dashboard() {
                   <Tooltip
                     formatter={(value) => [`${value} pesanan`, "Kuantitas"]}
                   />
-                  <Legend />
                 </PieChart>
               </ResponsiveContainer>
+            </div>
+            {/* Custom Legend modern, scrollable jika data banyak */}
+            <div className="mt-4 max-h-40 overflow-y-auto rounded-lg border border-border bg-white dark:bg-zinc-900 p-2 flex flex-col gap-2 shadow-inner">
+              {topProducts.map((entry, idx) => (
+                <div key={entry.name} className="flex items-center gap-3">
+                  <span
+                    className="inline-block w-3 h-3 rounded-full"
+                    style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                  ></span>
+                  <span className="font-semibold text-sm text-zinc-800 dark:text-zinc-100 truncate max-w-[120px]">
+                    {entry.name}
+                  </span>
+                  <span className="ml-auto text-xs text-zinc-500 dark:text-zinc-400">
+                    {(
+                      (entry.value /
+                        topProducts.reduce((a, b) => a + b.value, 0)) *
+                      100
+                    ).toFixed(1)}
+                    %
+                  </span>
+                  <span className="text-xs text-zinc-500 dark:text-zinc-400">
+                    ({entry.value}x)
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>

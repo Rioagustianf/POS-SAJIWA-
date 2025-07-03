@@ -353,9 +353,9 @@ export default function POS() {
       // Parse response
       const transaction = await response.json();
 
-      // Hitung service charge
-      const serviceAmount = Math.round(calculateTotal() * 0.05);
-      const finalTotal = calculateTotal() + serviceAmount;
+      // Hitung PPN 10%
+      const taxAmount = Math.round(calculateTotal() * 0.1);
+      const finalTotal = calculateTotal() + taxAmount;
 
       // Siapkan data struk
       const receiptData = {
@@ -366,7 +366,7 @@ export default function POS() {
         })),
         total: calculateTotal(),
         discount: 0,
-        service: serviceAmount,
+        tax: taxAmount,
         finalTotal: finalTotal,
         paymentMethod,
         cashAmount: Number.parseInt(cashAmount),
@@ -581,36 +581,22 @@ export default function POS() {
           <div class="separator"></div>
           <div class="payment-section">
             <div class="payment-info">
-              <div class="receipt-info">
+              <div className="flex justify-between text-sm">
                 <span>Subtotal</span>
-                <span>${formatCurrency(receiptData.total)}</span>
+                <span>{formatCurrency(receiptData.total)}</span>
               </div>
-              <div class="receipt-info">
-                <span>Discount</span>
-                <span>${formatCurrency(receiptData.discount || 0)}</span>
+              <div className="flex justify-between text-sm">
+                <span>PPN 10%</span>
+                <span>{formatCurrency(receiptData.tax)}</span>
               </div>
-              <div class="receipt-info">
-                <span>Service</span>
-                <span>${formatCurrency(
-                  receiptData.service || Math.round(receiptData.total * 0.05)
-                )}</span>
-              </div>
-              <div class="receipt-info">
-                <span>PB1</span>
-                <span>${formatCurrency(
-                  receiptData.tax || Math.round(receiptData.total * 0.1)
-                )}</span>
-              </div>
-              <div class="receipt-info total-row">
+              <div className="receipt-info total-row">
                 <span>Total</span>
-                <span>${formatCurrency(
-                  receiptData.finalTotal || receiptData.total
-                )}</span>
+                <span>${formatCurrency(receiptData.finalTotal)}</span>
               </div>
             </div>
             <div class="separator"></div>
             <div class="payment-method">
-              <div class="receipt-info">
+              <div className="receipt-info">
                 <span>Payment Method</span>
                 <span>${
                   receiptData.paymentMethod === "qris"
@@ -618,7 +604,7 @@ export default function POS() {
                     : receiptData.paymentMethod
                 }</span>
               </div>
-              <div class="receipt-info">
+              <div className="receipt-info">
                 <span>Changes</span>
                 <span>${formatCurrency(receiptData.change || 0)}</span>
               </div>
@@ -782,9 +768,6 @@ export default function POS() {
                 <h2 className="text-lg font-bold">
                   Pesanan {customerName || "Pelanggan"}
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  Order #{Date.now().toString().slice(-4)}
-                </p>
               </div>
               <div className="flex items-center gap-2">
                 {cart.length > 0 && (
@@ -923,9 +906,19 @@ export default function POS() {
                   <span>Subtotal</span>
                   <span>{formatCurrency(calculateTotal())}</span>
                 </div>
+                <div className="flex justify-between text-sm">
+                  <span>PPN 10%</span>
+                  <span>
+                    {formatCurrency(Math.round(calculateTotal() * 0.1))}
+                  </span>
+                </div>
                 <div className="flex justify-between text-lg font-bold pt-2 border-t">
                   <span>TOTAL</span>
-                  <span>{formatCurrency(calculateTotal())}</span>
+                  <span>
+                    {formatCurrency(
+                      calculateTotal() + Math.round(calculateTotal() * 0.1)
+                    )}
+                  </span>
                 </div>
               </div>
 
@@ -1090,9 +1083,19 @@ export default function POS() {
                     <span>Subtotal</span>
                     <span>{formatCurrency(calculateTotal())}</span>
                   </div>
+                  <div className="flex justify-between text-sm">
+                    <span>PPN 10%</span>
+                    <span>
+                      {formatCurrency(Math.round(calculateTotal() * 0.1))}
+                    </span>
+                  </div>
                   <div className="flex justify-between text-lg font-bold pt-2 border-t">
                     <span>TOTAL</span>
-                    <span>{formatCurrency(calculateTotal())}</span>
+                    <span>
+                      {formatCurrency(
+                        calculateTotal() + Math.round(calculateTotal() * 0.1)
+                      )}
+                    </span>
                   </div>
                 </div>
                 <button
@@ -1297,8 +1300,8 @@ export default function POS() {
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="font-medium">Layanan (5%)</span>
-                  <span>{formatCurrency(receiptData.service)}</span>
+                  <span className="font-medium">PPN 10%</span>
+                  <span>{formatCurrency(receiptData.tax)}</span>
                 </div>
 
                 <div className="flex justify-between font-bold mt-2">

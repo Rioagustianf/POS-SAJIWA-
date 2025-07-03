@@ -96,3 +96,9 @@
     @apply bg-background text-foreground;
   }
 }
+
+[data-active="true"],
+[data-active="true"]:hover {
+  background-color: #85193c !important;
+  color: #fff !important;
+}

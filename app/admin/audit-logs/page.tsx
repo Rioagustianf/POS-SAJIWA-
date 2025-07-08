@@ -421,12 +421,7 @@ export default function AuditLogs() {
                         </td>
                         <td className="px-4 py-3">{log.tableName}</td>
                         <td className="px-4 py-3">{log.recordId}</td>
-                        <td className="px-4 py-3">
-                          {log.user.username}
-                          <span className="text-xs text-muted-foreground ml-1">
-                            ({log.user.role})
-                          </span>
-                        </td>
+                        <td className="px-4 py-3">{log.user.username}</td>
                         <td className="px-4 py-3">
                           {format(
                             new Date(log.createdAt),
